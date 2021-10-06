@@ -38,7 +38,8 @@
 
 enum {
   MACRO_QWERTY,
-  MACRO_VERSION_INFO
+  MACRO_VERSION_INFO,
+  MACRO_DBL_BQ,
 };
 
 #define Key_Exclamation LSHIFT(Key_1)
@@ -50,6 +51,11 @@ enum {
 #define Key_And LSHIFT(Key_7)
 #define Key_Star LSHIFT(Key_8)
 #define Key_Plus LSHIFT(Key_Equals)
+#define Key_Underscore LSHIFT(Key_Minus)
+#define Key_Tilde LSHIFT(Key_Backtick)
+#define Key_Colon LSHIFT(Key_Semicolon)
+#define Key_DBLQuote LSHIFT(Key_Quote)
+#define Key_Pipe LSHIFT(Key_Backslash)
 
 enum {
   QWERTY,
@@ -63,26 +69,26 @@ KEYMAPS(
   (
        Key_Q   ,Key_W   ,Key_E       ,Key_R         ,Key_T
       ,Key_A   ,Key_S   ,Key_D       ,Key_F         ,Key_G
-      ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B, Key_Backtick
-      ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_LeftShift ,Key_Backspace ,Key_LeftControl
+      ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
+      ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
                      ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
        ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
-       ,Key_LeftAlt  ,Key_Space ,MO(FUN)    ,Key_Minus ,Key_Quote  ,Key_Enter
+       ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
   ),
 
   [FUN] = KEYMAP_STACKED
   (
-       Key_Exclamation ,Key_At           ,Key_UpArrow   ,Key_Dollar           ,Key_Percent
-      ,Key_LeftParen   ,Key_LeftArrow    ,Key_DownArrow ,Key_RightArrow       ,Key_RightParen
-      ,Key_LeftBracket ,Key_RightBracket ,Key_Hash      ,Key_LeftCurlyBracket ,Key_RightCurlyBracket ,Key_Caret
-      ,TG(UPPER)       ,Key_Insert       ,Key_LeftGui   ,Key_LeftShift        ,Key_Delete         ,Key_LeftControl
+       Key_Exclamation ,Key_At           ,Key_Underscore   ,Key_Tab     ,LSHIFT(Key_Tab)
+      ,Key_Hash        ,Key_Dollar       ,Key_Minus        ,Key_Esc     ,LSHIFT(Key_Esc)
+      ,Key_Percent     ,Key_Caret        ,Key_Tilde        ,Key_Colon   ,___                ,___
+      ,___             ,___              ,___              ,___         ,___                ,___
 
-                   ,Key_PageUp   ,Key_7 ,Key_8      ,Key_9 ,Key_Backspace
-                   ,Key_PageDown ,Key_4 ,Key_5      ,Key_6 ,___
-      ,Key_And     ,Key_Star     ,Key_1 ,Key_2      ,Key_3 ,Key_Plus
-      ,Key_LeftAlt ,Key_Space    ,___   ,Key_Period ,Key_0 ,Key_Equals
+                   ,M(MACRO_DBL_BQ),Key_Tilde ,Key_DBLQuote    ,Key_Pipe  ,Key_Backslash
+                   ,Key_Plus       ,Key_Minus ,Key_Slash       ,Key_Star  ,Key_Quote
+      ,___         ,Key_And        ,Key_Equals,Key_Comma       ,Key_Period,Key_Semicolon
+      ,___         ,___            ,___       ,___             ,___       ,___
    ),
 
   [UPPER] = KEYMAP_STACKED
@@ -127,6 +133,9 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
       Macros.type(PSTR("Keyboardio Atreus - Kaleidoscope "));
       Macros.type(PSTR(BUILD_INFORMATION));
       break;
+    case MACRO_DBL_BQ:
+      Macros.type(PSTR("``"));
+      break;
     default:
       break;
     }
@@ -138,8 +147,27 @@ void setup() {
   Kaleidoscope.setup();
   SpaceCadet.disable();
   EEPROMKeymap.setup(10);
+
+  QUKEYS(
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 0), Key_LeftControl),      // A
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 11), Key_LeftControl),      // ;
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 1), Key_LeftAlt),      // s
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 10), Key_LeftAlt),      // l
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftShift),    // thumb outer
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(UPPER)),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(FUN)),    // thumb fun
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 3), Key_LeftGui),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 8), Key_LeftGui),    // thumb fun
+  )
 }
 
 void loop() {
   Kaleidoscope.loop();
 }
+
+
