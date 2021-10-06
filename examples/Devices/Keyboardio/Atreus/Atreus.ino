@@ -31,8 +31,6 @@
 #include "Kaleidoscope-Qukeys.h"
 #include "Kaleidoscope-SpaceCadet.h"
 
-
-
 #define MO(n) ShiftToLayer(n)
 #define TG(n) LockLayer(n)
 
@@ -56,11 +54,17 @@ enum {
 #define Key_Colon LSHIFT(Key_Semicolon)
 #define Key_DBLQuote LSHIFT(Key_Quote)
 #define Key_Pipe LSHIFT(Key_Backslash)
+#define Key_LeftCurl LSHIFT(Key_LeftBracket)
+#define Key_RightCurl LSHIFT(Key_RightBracket)
+#define Key_LessThan  LSHIFT(Key_Comma)
+#define Key_GreaterThan LSHIFT(Key_Period)
 
 enum {
   QWERTY,
   FUN,
-  UPPER
+  UPPER,
+  PAREN,
+  MOUSE,
 };
 
 /* *INDENT-OFF* */
@@ -93,17 +97,67 @@ KEYMAPS(
 
   [UPPER] = KEYMAP_STACKED
   (
-       Key_Insert            ,Key_Home                 ,Key_UpArrow   ,Key_End        ,Key_PageUp
-      ,Key_Delete            ,Key_LeftArrow            ,Key_DownArrow ,Key_RightArrow ,Key_PageDown
-      ,M(MACRO_VERSION_INFO) ,Consumer_VolumeIncrement ,XXX           ,XXX            ,___ ,___
-      ,MoveToLayer(QWERTY)   ,Consumer_VolumeDecrement ,___           ,___            ,___ ,___
+       Key_1               ,Key_2                 ,Key_3   ,Key_4        ,Key_5
+      ,Key_F1              ,Key_F2                ,Key_F3  ,Key_F4       ,Key_F5
+      ,Key_F6              ,Key_F7                ,Key_F8  ,Key_F9       ,Key_F10 ,___
+      ,MoveToLayer(QWERTY) ,M(MACRO_VERSION_INFO) ,___     ,___          ,___     ,___
 
-                ,Key_UpArrow   ,Key_F7              ,Key_F8          ,Key_F9         ,Key_F10
-                ,Key_DownArrow ,Key_F4              ,Key_F5          ,Key_F6         ,Key_F11
-      ,___      ,XXX           ,Key_F1              ,Key_F2          ,Key_F3         ,Key_F12
-      ,___      ,___           ,MoveToLayer(QWERTY) ,Key_PrintScreen ,Key_ScrollLock ,Consumer_PlaySlashPause
+                ,Key_6         ,Key_7               ,Key_8           ,Key_9          ,Key_0
+                ,Key_LeftArrow ,Key_DownArrow       ,Key_UpArrow     ,Key_RightArrow ,Key_F10
+      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_F15
+      ,___      ,___           ,___                 ,___             ,___            ,___
+   ),
+
+   [PAREN] = KEYMAP_STACKED
+   (
+       Key_Home        ,Key_End          ,___   ,___    ,___  
+      ,Key_LessThan    ,Key_GreaterThan  ,___   ,___    ,___  
+      ,Key_PageUp      ,Key_PageDown     ,___   ,___    ,___       ,___  
+      ,___             ,___              ,___   ,___    ,___       ,___  
+
+                    ,___      ,Key_LeftBracket ,Key_RightBracket,___        ,___  
+                    ,___      ,Key_LeftParen   ,Key_RightParen  ,___        ,___  
+       ,___  ,___   ,___      ,Key_LeftCurl    ,Key_RightCurl   ,___  
+       ,___  ,___   ,___      ,___   ,___   ,___  
+   ),
+
+   [MOUSE] = KEYMAP_STACKED
+   (
+
+       Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___  
+      ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___  
+      ,___               ,___             ,___         ,___              ,___  ,___         
+      ,___               ,___             ,___         ,___              ,Key_mouseBtnL,___          
+
+                     ,___       ,___        ,___       ,___        ,___  
+                     ,___       ,___        ,___       ,___        ,___          
+       ,___          ,___       ,___        ,___       ,___        ,___      
+       ,___          ,Key_mouseBtnR       ,___        ,___       ,___        ,___      
    )
 )
+
+/*
+ * 
+#include <Kaleidoscope-MouseKeys.h>
+
+// Somewhere in the keymap:
+Key_mouseUp, Key_mouseDn, Key_mouseL, Key_mouseR,
+Key_mouseBtnL, Key_mouseBtnR
+
+
+
+    Key_mouseScrollUp, Key_mouseScrollDn: Scroll the mouse wheel up or down, respectively.
+
+    Key_mouseScrollL, Key_mouseScrollR: Scroll the mouse wheel left or right, respectively.
+
+KALEIDOSCOPE_INIT_PLUGINS(MouseKeys);
+
+void setup() {
+  Kaleidoscope.setup ();
+} */
+
+
+
 /* *INDENT-ON* */
 
 KALEIDOSCOPE_INIT_PLUGINS(
@@ -163,7 +217,14 @@ void setup() {
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 3), Key_LeftGui),    // thumb fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 8), Key_LeftGui),    // thumb fun
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 3), ShiftToLayer(PAREN)),    // index fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
   )
+
+
+  MouseKeys.speed = 10;
+  MouseKeys.accelSpeed = 3;
 }
 
 void loop() {
