@@ -129,34 +129,28 @@ KEYMAPS(
       ,___               ,___             ,___         ,___              ,___  ,___         
       ,___               ,___             ,___         ,___              ,Key_mouseBtnL,___          
 
-                     ,___       ,___        ,___       ,___        ,___  
-                     ,___       ,___        ,___       ,___        ,___          
-       ,___          ,___       ,___        ,___       ,___        ,___      
-       ,___          ,Key_mouseBtnR       ,___        ,___       ,___        ,___      
+                     ,___       ,___        ,Key_mouseWarpNW       ,Key_mouseWarpN        ,Key_mouseWarpNE  
+                     ,___       ,___        ,Key_mouseWarpW       ,Key_mouseWarpIn        ,Key_mouseWarpE          
+       ,___          ,___       ,___        ,Key_mouseWarpSW       ,Key_mouseWarpS        ,Key_mouseWarpSE      
+       ,___          ,Key_mouseBtnR       ,Key_mouseWarpEnd        ,___       ,___        ,___      
    )
 )
 
-/*
+/* 
+
+
+    Key_mouseWarpNW, Key_mouseWarpNE, Key_mouseWarpSW, Key_mouseWarpSE: Warp towards the north-west, north-east, south-west, or south-east quadrants, respectively.
+
+    Key_mouseWarpEnd: End the warping sequence, resetting it to the default state. Using any of the warping keys after this will start from the whole screen again.
+
+
+    Key_mouseWarpN, Key_mouseWarpE, Key_mouseWarpS, Key_mouseWarpW: Warp towards the north, east, south, and west sectors, respectively.
+
+    Key_mouseWarpIn: Warp to the center sector of the grid. The plugin will continue to “zoom” into center of the current cell with each consecutive press of this key.
+
  * 
-#include <Kaleidoscope-MouseKeys.h>
-
-// Somewhere in the keymap:
-Key_mouseUp, Key_mouseDn, Key_mouseL, Key_mouseR,
-Key_mouseBtnL, Key_mouseBtnR
-
-
-
-    Key_mouseScrollUp, Key_mouseScrollDn: Scroll the mouse wheel up or down, respectively.
-
-    Key_mouseScrollL, Key_mouseScrollR: Scroll the mouse wheel left or right, respectively.
-
-KALEIDOSCOPE_INIT_PLUGINS(MouseKeys);
-
-void setup() {
-  Kaleidoscope.setup ();
-} */
-
-
+ */
+ 
 
 /* *INDENT-ON* */
 
@@ -225,6 +219,7 @@ void setup() {
 
   MouseKeys.speed = 10;
   MouseKeys.accelSpeed = 3;
+  MouseKeys.setWarpGridSize(MOUSE_WARP_GRID_3X3);
 }
 
 void loop() {
