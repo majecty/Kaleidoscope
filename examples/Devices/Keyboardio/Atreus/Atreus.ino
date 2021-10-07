@@ -30,6 +30,7 @@
 #include "Kaleidoscope-OneShot.h"
 #include "Kaleidoscope-Qukeys.h"
 #include "Kaleidoscope-SpaceCadet.h"
+#include "Kaleidoscope-MagicCombo.h"
 
 #define MO(n) ShiftToLayer(n)
 #define TG(n) LockLayer(n)
@@ -66,6 +67,43 @@ enum {
   PAREN,
   MOUSE,
 };
+
+enum {
+  COMBO_EMACS_HANGUL,
+  COMBO_JK_COLON
+};
+
+void macroEmacsHangul(uint8_t combo_index) {
+
+  /*
+   *       return MACRO(I(25),
+                   D(LeftShift), T(M), U(LeftShift), T(O), T(D), T(E), T(L),
+                   T(Spacebar),
+                   W(100),
+                   T(0), T(1) );
+   */
+
+  Macros.play(MACRO(T(F14)));
+}
+
+void jkColon(uint8_t combo_index) {
+  Macros.type(PSTR("juhyung"));
+}
+
+// jk : 
+// vb hangul
+USE_MAGIC_COMBOS(
+  [COMBO_EMACS_HANGUL] = {
+    .action = macroEmacsHangul,
+    .keys = { R1C8, R2C8 }
+  },
+  [COMBO_JK_COLON] = {
+    .action = jkColon,
+    .keys = { R1C8, R1C9 }
+  }
+);
+
+
 
 /* *INDENT-OFF* */
 KEYMAPS(
@@ -115,9 +153,9 @@ KEYMAPS(
       ,Key_PageUp      ,Key_PageDown     ,___   ,___    ,___       ,___  
       ,___             ,___              ,___   ,___    ,___       ,___  
 
-                    ,___      ,Key_LeftBracket ,Key_RightBracket,___        ,___  
-                    ,___      ,Key_LeftParen   ,Key_RightParen  ,___        ,___  
-       ,___  ,___   ,___      ,Key_LeftCurl    ,Key_RightCurl   ,___  
+             ,___   ,Key_LeftCurl    ,Key_RightCurl   ,___   ,___  
+             ,___   ,Key_LeftParen   ,Key_RightParen  ,___   ,___  
+       ,___  ,___   ,Key_LeftBracket ,Key_RightBracket,___   ,___  
        ,___  ,___   ,___      ,___   ,___   ,___  
    ),
 
@@ -132,7 +170,7 @@ KEYMAPS(
                      ,___       ,___        ,Key_mouseWarpNW       ,Key_mouseWarpN        ,Key_mouseWarpNE  
                      ,___       ,___        ,Key_mouseWarpW       ,Key_mouseWarpIn        ,Key_mouseWarpE          
        ,___          ,___       ,___        ,Key_mouseWarpSW       ,Key_mouseWarpS        ,Key_mouseWarpSE      
-       ,___          ,Key_mouseBtnR       ,Key_mouseWarpEnd        ,___       ,___        ,___      
+       ,Key_mouseBtnM,Key_mouseBtnR       ,Key_mouseWarpEnd        ,___       ,___        ,___      
    )
 )
 
@@ -164,7 +202,8 @@ KALEIDOSCOPE_INIT_PLUGINS(
   SpaceCadet,
   OneShot,
   Macros,
-  MouseKeys
+  MouseKeys,
+  MagicCombo
 );
 
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
@@ -217,7 +256,7 @@ void setup() {
   )
 
 
-  MouseKeys.speed = 10;
+  MouseKeys.speed = 8;
   MouseKeys.accelSpeed = 3;
   MouseKeys.setWarpGridSize(MOUSE_WARP_GRID_3X3);
 }
