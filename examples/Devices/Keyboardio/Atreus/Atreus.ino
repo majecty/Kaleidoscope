@@ -35,12 +35,6 @@
 #define MO(n) ShiftToLayer(n)
 #define TG(n) LockLayer(n)
 
-enum {
-  MACRO_QWERTY,
-  MACRO_VERSION_INFO,
-  MACRO_DBL_BQ,
-};
-
 #define Key_Exclamation LSHIFT(Key_1)
 #define Key_At LSHIFT(Key_2)
 #define Key_Hash LSHIFT(Key_3)
@@ -59,6 +53,14 @@ enum {
 #define Key_RightCurl LSHIFT(Key_RightBracket)
 #define Key_LessThan  LSHIFT(Key_Comma)
 #define Key_GreaterThan LSHIFT(Key_Period)
+
+enum {
+  MACRO_QWERTY,
+  MACRO_VERSION_INFO,
+  MACRO_DBL_BQ,
+  MACRO_MOUSE_SPEED_NORMAL,
+  MACRO_MOUSE_SPEED_SMALL,
+};
 
 enum {
   QWERTY,
@@ -164,7 +166,7 @@ KEYMAPS(
 
        Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___  
       ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___  
-      ,___               ,___             ,___         ,___              ,___  ,___         
+      ,M(MACRO_MOUSE_SPEED_SMALL),M(MACRO_MOUSE_SPEED_NORMAL),___         ,___              ,___  ,___         
       ,___               ,___             ,___         ,___              ,Key_mouseBtnL,___          
 
                      ,___       ,___        ,Key_mouseWarpNW       ,Key_mouseWarpN        ,Key_mouseWarpNE  
@@ -223,6 +225,16 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
     case MACRO_DBL_BQ:
       Macros.type(PSTR("``"));
       break;
+    case MACRO_MOUSE_SPEED_NORMAL:
+      MouseKeys.speed = 7;
+      MouseKeys.accelSpeed = 3;
+      MouseKeys.setSpeedLimit(127);
+      break;
+    case MACRO_MOUSE_SPEED_SMALL:
+      MouseKeys.speed = 1;
+      MouseKeys.accelSpeed = 3;
+      MouseKeys.setSpeedLimit(20);
+      break;
     default:
       break;
     }
@@ -242,6 +254,9 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 1), Key_LeftAlt),      // s
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 10), Key_LeftAlt),      // l
 
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 0), Key_LeftShift),    // pinky
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 11), Key_LeftAlt),    // pinky
+
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftShift),    // thumb outer
 
@@ -255,8 +270,7 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
   )
 
-
-  MouseKeys.speed = 8;
+  MouseKeys.speed = 7;
   MouseKeys.accelSpeed = 3;
   MouseKeys.setWarpGridSize(MOUSE_WARP_GRID_3X3);
 }
