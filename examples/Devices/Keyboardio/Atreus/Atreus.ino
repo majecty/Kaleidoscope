@@ -31,6 +31,7 @@
 #include "Kaleidoscope-Qukeys.h"
 #include "Kaleidoscope-SpaceCadet.h"
 #include "Kaleidoscope-MagicCombo.h"
+#include "Kaleidoscope-TapDance.h"
 
 #define MO(n) ShiftToLayer(n)
 #define TG(n) LockLayer(n)
@@ -58,14 +59,14 @@ enum {
   MACRO_QWERTY,
   MACRO_VERSION_INFO,
   MACRO_DBL_BQ,
-  MACRO_MOUSE_SPEED_NORMAL,
-  MACRO_MOUSE_SPEED_SMALL,
+  MACRO_MOUSE_FAST,
+  MACRO_MOUSE_SLOW,
 };
 
 enum {
   QWERTY,
-  FUN,
-  UPPER,
+  SYMBOL,
+  NUMBER,
   PAREN,
   MOUSE,
 };
@@ -73,6 +74,10 @@ enum {
 enum {
   COMBO_EMACS_HANGUL,
   COMBO_JK_COLON
+};
+
+enum {
+  TD_P_QUOTE, // semicolon and quote
 };
 
 void macroEmacsHangul(uint8_t combo_index) {
@@ -116,13 +121,13 @@ KEYMAPS(
       ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
       ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
-                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
+                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,TD(TD_P_QUOTE)
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
        ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
        ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
   ),
 
-  [FUN] = KEYMAP_STACKED
+  [SYMBOL] = KEYMAP_STACKED
   (
        Key_Exclamation ,Key_At           ,Key_Underscore   ,Key_Tab     ,LSHIFT(Key_Tab)
       ,Key_Hash        ,Key_Dollar       ,Key_Minus        ,Key_Esc     ,LSHIFT(Key_Esc)
@@ -135,7 +140,7 @@ KEYMAPS(
       ,___         ,___            ,___       ,___             ,___       ,___
    ),
 
-  [UPPER] = KEYMAP_STACKED
+  [NUMBER] = KEYMAP_STACKED
   (
        Key_1               ,Key_2                 ,Key_3   ,Key_4        ,Key_5
       ,Key_F1              ,Key_F2                ,Key_F3  ,Key_F4       ,Key_F5
@@ -166,13 +171,13 @@ KEYMAPS(
 
        Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___  
       ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___  
-      ,M(MACRO_MOUSE_SPEED_SMALL),M(MACRO_MOUSE_SPEED_NORMAL),___         ,___              ,___  ,___         
-      ,___               ,___             ,___         ,___              ,Key_mouseBtnL,___          
+      ,M(MACRO_MOUSE_SLOW),M(MACRO_MOUSE_FAST),___     ,___              ,___          ,___         
+      ,___               ,___             ,___         ,M(MACRO_MOUSE_SLOW),Key_mouseBtnL,___          
 
-                     ,___       ,___        ,Key_mouseWarpNW       ,Key_mouseWarpN        ,Key_mouseWarpNE  
-                     ,___       ,___        ,Key_mouseWarpW       ,Key_mouseWarpIn        ,Key_mouseWarpE          
-       ,___          ,___       ,___        ,Key_mouseWarpSW       ,Key_mouseWarpS        ,Key_mouseWarpSE      
-       ,Key_mouseBtnM,Key_mouseBtnR       ,Key_mouseWarpEnd        ,___       ,___        ,___      
+                     ,___           ,___              ,Key_mouseWarpNW ,Key_mouseWarpN  ,Key_mouseWarpNE  
+                     ,___           ,___              ,Key_mouseWarpW  ,Key_mouseWarpIn ,Key_mouseWarpE          
+       ,___          ,___           ,___              ,Key_mouseWarpSW ,Key_mouseWarpS  ,Key_mouseWarpSE      
+       ,Key_mouseBtnM,Key_mouseBtnR ,M(MACRO_MOUSE_FAST),___             ,___             ,___      
    )
 )
 
@@ -205,8 +210,16 @@ KALEIDOSCOPE_INIT_PLUGINS(
   OneShot,
   Macros,
   MouseKeys,
-  MagicCombo
+  MagicCombo,
+  TapDance
 );
+
+void tapDanceAction(uint8_t tap_dance_index, KeyAddr key_addr, uint8_t tap_count, kaleidoscope::plugin::TapDance::ActionType tap_dance_action) {
+  switch (tap_dance_index) {
+    case TD_P_QUOTE:
+      return tapDanceActionKeys(tap_count, tap_dance_action, Key_P, Key_Quote);
+  }
+}
 
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   if (keyToggledOn(event.state)) {
@@ -225,13 +238,13 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
     case MACRO_DBL_BQ:
       Macros.type(PSTR("``"));
       break;
-    case MACRO_MOUSE_SPEED_NORMAL:
+    case MACRO_MOUSE_FAST:
       MouseKeys.speed = 7;
       MouseKeys.accelSpeed = 3;
       MouseKeys.setSpeedLimit(127);
       break;
-    case MACRO_MOUSE_SPEED_SMALL:
-      MouseKeys.speed = 1;
+    case MACRO_MOUSE_SLOW:
+      MouseKeys.speed = 3;
       MouseKeys.accelSpeed = 3;
       MouseKeys.setSpeedLimit(20);
       break;
@@ -255,16 +268,16 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 10), Key_LeftAlt),      // l
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(2, 0), Key_LeftShift),    // pinky
-      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 11), Key_LeftAlt),    // pinky
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 11), Key_LeftGui),    // pinky
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
-      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftShift),    // thumb outer
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftGui),    // thumb outer
 
-      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(UPPER)),    // thumb fun
-      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(FUN)),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(SYMBOL)),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(NUMBER)),    // thumb fun
 
-      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 3), Key_LeftGui),    // thumb fun
-      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 8), Key_LeftGui),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 3), Key_LeftGui),    // thumb inner
+      kaleidoscope::plugin::Qukey(0, KeyAddr(3, 8), Key_LeftShift),    // thumb inner
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 3), ShiftToLayer(PAREN)),    // index fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
