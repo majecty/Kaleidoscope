@@ -69,6 +69,7 @@ enum {
   NUMBER,
   PAREN,
   MOUSE,
+  PLAIN,
 };
 
 enum {
@@ -177,7 +178,20 @@ KEYMAPS(
                      ,___           ,___              ,Key_mouseWarpW  ,Key_mouseWarpIn ,Key_mouseWarpE
        ,___          ,___           ,___              ,Key_mouseWarpSW ,Key_mouseWarpS  ,Key_mouseWarpSE
        ,Key_mouseBtnM,Key_mouseBtnR ,M(MACRO_MOUSE_FAST),___             ,___             ,___
-   )
+   ),
+
+  [PLAIN] = KEYMAP_STACKED
+  (
+       Key_Q   ,Key_W   ,Key_E       ,Key_R         ,Key_T
+      ,Key_A   ,Key_S   ,Key_D       ,Key_F         ,Key_G
+      ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
+      ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
+
+                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,TD(TD_P_QUOTE)
+                     ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
+       ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
+       ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
+  )
 )
 
 /*
@@ -273,6 +287,8 @@ void setup() {
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftGui),    // thumb outer
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // thumb fun
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(SYMBOL)),    // thumb fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(NUMBER)),    // thumb fun
