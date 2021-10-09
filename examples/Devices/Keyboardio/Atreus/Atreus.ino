@@ -97,7 +97,7 @@ void jkColon(uint8_t combo_index) {
   Macros.type(PSTR("juhyung"));
 }
 
-// jk : 
+// jk :
 // vb hangul
 USE_MAGIC_COMBOS(
   [COMBO_EMACS_HANGUL] = {
@@ -155,33 +155,32 @@ KEYMAPS(
 
    [PAREN] = KEYMAP_STACKED
    (
-       Key_Home        ,Key_End          ,___   ,___    ,___  
-      ,Key_LessThan    ,Key_GreaterThan  ,___   ,___    ,___  
-      ,Key_PageUp      ,Key_PageDown     ,___   ,___    ,___       ,___  
-      ,___             ,___              ,___   ,___    ,___       ,___  
+       Key_Home        ,Key_End          ,___   ,___    ,___
+      ,Key_LessThan    ,Key_GreaterThan  ,___   ,___    ,___
+      ,Key_PageUp      ,Key_PageDown     ,___   ,___    ,___       ,___
+      ,___             ,___              ,___   ,___    ,___       ,___
 
-             ,___   ,Key_LeftCurl    ,Key_RightCurl   ,___   ,___  
-             ,___   ,Key_LeftParen   ,Key_RightParen  ,___   ,___  
-       ,___  ,___   ,Key_LeftBracket ,Key_RightBracket,___   ,___  
-       ,___  ,___   ,___      ,___   ,___   ,___  
+             ,___   ,Key_LeftCurl    ,Key_RightCurl   ,___   ,___
+             ,___   ,Key_LeftParen   ,Key_RightParen  ,___   ,___
+       ,___  ,___   ,Key_LeftBracket ,Key_RightBracket,___   ,___
+       ,___  ,___   ,___      ,___   ,___   ,___
    ),
 
    [MOUSE] = KEYMAP_STACKED
    (
+       Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___
+      ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___
+      ,M(MACRO_MOUSE_SLOW),M(MACRO_MOUSE_FAST),___     ,___              ,___          ,___
+      ,___               ,___             ,___         ,M(MACRO_MOUSE_SLOW),Key_mouseBtnL,___
 
-       Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___  
-      ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___  
-      ,M(MACRO_MOUSE_SLOW),M(MACRO_MOUSE_FAST),___     ,___              ,___          ,___         
-      ,___               ,___             ,___         ,M(MACRO_MOUSE_SLOW),Key_mouseBtnL,___          
-
-                     ,___           ,___              ,Key_mouseWarpNW ,Key_mouseWarpN  ,Key_mouseWarpNE  
-                     ,___           ,___              ,Key_mouseWarpW  ,Key_mouseWarpIn ,Key_mouseWarpE          
-       ,___          ,___           ,___              ,Key_mouseWarpSW ,Key_mouseWarpS  ,Key_mouseWarpSE      
-       ,Key_mouseBtnM,Key_mouseBtnR ,M(MACRO_MOUSE_FAST),___             ,___             ,___      
+                     ,___           ,___              ,Key_mouseWarpNW ,Key_mouseWarpN  ,Key_mouseWarpNE
+                     ,___           ,___              ,Key_mouseWarpW  ,Key_mouseWarpIn ,Key_mouseWarpE
+       ,___          ,___           ,___              ,Key_mouseWarpSW ,Key_mouseWarpS  ,Key_mouseWarpSE
+       ,Key_mouseBtnM,Key_mouseBtnR ,M(MACRO_MOUSE_FAST),___             ,___             ,___
    )
 )
 
-/* 
+/*
 
 
     Key_mouseWarpNW, Key_mouseWarpNE, Key_mouseWarpSW, Key_mouseWarpSE: Warp towards the north-west, north-east, south-west, or south-east quadrants, respectively.
@@ -193,9 +192,9 @@ KEYMAPS(
 
     Key_mouseWarpIn: Warp to the center sector of the grid. The plugin will continue to “zoom” into center of the current cell with each consecutive press of this key.
 
- * 
+ *
  */
- 
+
 
 /* *INDENT-ON* */
 
