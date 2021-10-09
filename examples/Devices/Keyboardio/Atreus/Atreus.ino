@@ -72,47 +72,6 @@ enum {
   PLAIN,
 };
 
-enum {
-  COMBO_EMACS_HANGUL,
-  COMBO_JK_COLON
-};
-
-enum {
-  TD_P_QUOTE, // semicolon and quote
-};
-
-void macroEmacsHangul(uint8_t combo_index) {
-
-  /*
-   *       return MACRO(I(25),
-                   D(LeftShift), T(M), U(LeftShift), T(O), T(D), T(E), T(L),
-                   T(Spacebar),
-                   W(100),
-                   T(0), T(1) );
-   */
-
-  Macros.play(MACRO(T(F14)));
-}
-
-void jkColon(uint8_t combo_index) {
-  Macros.type(PSTR("juhyung"));
-}
-
-// jk :
-// vb hangul
-USE_MAGIC_COMBOS(
-  [COMBO_EMACS_HANGUL] = {
-    .action = macroEmacsHangul,
-    .keys = { R1C8, R2C8 }
-  },
-  [COMBO_JK_COLON] = {
-    .action = jkColon,
-    .keys = { R1C8, R1C9 }
-  }
-);
-
-
-
 /* *INDENT-OFF* */
 KEYMAPS(
   [QWERTY] = KEYMAP_STACKED
@@ -122,7 +81,7 @@ KEYMAPS(
       ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
       ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
-                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,TD(TD_P_QUOTE)
+                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
        ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
        ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
@@ -150,7 +109,7 @@ KEYMAPS(
 
                 ,Key_6         ,Key_7               ,Key_8           ,Key_9          ,Key_0
                 ,Key_LeftArrow ,Key_DownArrow       ,Key_UpArrow     ,Key_RightArrow ,Key_F10
-      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_F15
+      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_Quote
       ,___      ,___           ,___                 ,___             ,___            ,___
    ),
 
@@ -187,28 +146,12 @@ KEYMAPS(
       ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
       ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
-                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,TD(TD_P_QUOTE)
+                     ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
        ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
        ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
   )
 )
-
-/*
-
-
-    Key_mouseWarpNW, Key_mouseWarpNE, Key_mouseWarpSW, Key_mouseWarpSE: Warp towards the north-west, north-east, south-west, or south-east quadrants, respectively.
-
-    Key_mouseWarpEnd: End the warping sequence, resetting it to the default state. Using any of the warping keys after this will start from the whole screen again.
-
-
-    Key_mouseWarpN, Key_mouseWarpE, Key_mouseWarpS, Key_mouseWarpW: Warp towards the north, east, south, and west sectors, respectively.
-
-    Key_mouseWarpIn: Warp to the center sector of the grid. The plugin will continue to “zoom” into center of the current cell with each consecutive press of this key.
-
- *
- */
-
 
 /* *INDENT-ON* */
 
@@ -222,17 +165,8 @@ KALEIDOSCOPE_INIT_PLUGINS(
   SpaceCadet,
   OneShot,
   Macros,
-  MouseKeys,
-  MagicCombo,
-  TapDance
+  MouseKeys
 );
-
-void tapDanceAction(uint8_t tap_dance_index, KeyAddr key_addr, uint8_t tap_count, kaleidoscope::plugin::TapDance::ActionType tap_dance_action) {
-  switch (tap_dance_index) {
-    case TD_P_QUOTE:
-      return tapDanceActionKeys(tap_count, tap_dance_action, Key_P, Key_Quote);
-  }
-}
 
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   if (keyToggledOn(event.state)) {
