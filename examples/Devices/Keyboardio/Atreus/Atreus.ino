@@ -238,14 +238,16 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
       Macros.type(PSTR("``"));
       break;
     case MACRO_MOUSE_FAST:
-      MouseKeys.speed = 7;
+      MouseKeys.speed = 10;
       MouseKeys.accelSpeed = 3;
       MouseKeys.setSpeedLimit(127);
+      MouseKeys.wheelSpeed = 1;
       break;
     case MACRO_MOUSE_SLOW:
       MouseKeys.speed = 3;
-      MouseKeys.accelSpeed = 3;
+      MouseKeys.accelSpeed = 1;
       MouseKeys.setSpeedLimit(20);
+      MouseKeys.wheelSpeed = 10;
       break;
     default:
       break;
