@@ -60,6 +60,7 @@ enum {
   MACRO_VERSION_INFO,
   MACRO_DBL_BQ,
   MACRO_MOUSE_FAST,
+  MACRO_MOUSE_NORMAL,
   MACRO_MOUSE_SLOW,
 };
 
@@ -69,6 +70,7 @@ enum {
   NUMBER,
   PAREN,
   MOUSE,
+  MOUSE_WARP,
   PLAIN,
 };
 
@@ -130,14 +132,28 @@ KEYMAPS(
    (
        Key_mouseScrollUp ,Key_mouseScrollL,Key_mouseUp ,Key_mouseScrollR ,___
       ,Key_mouseScrollDn ,Key_mouseL      ,Key_mouseDn ,Key_mouseR       ,___
-      ,M(MACRO_MOUSE_SLOW),M(MACRO_MOUSE_FAST),___     ,___              ,___          ,___
-      ,___               ,___             ,___         ,M(MACRO_MOUSE_SLOW),Key_mouseBtnL,___
+      ,___               ,___             ,___         ,___              ,___            ,___
+      ,___               ,___             ,___         ,___              ,Key_mouseBtnL  ,Key_mouseBtnM
 
-                     ,___           ,___              ,Key_mouseWarpNW ,Key_mouseWarpN  ,Key_mouseWarpNE
-                     ,___           ,___              ,Key_mouseWarpW  ,Key_mouseWarpIn ,Key_mouseWarpE
-       ,___          ,___           ,___              ,Key_mouseWarpSW ,Key_mouseWarpS  ,Key_mouseWarpSE
-       ,Key_mouseBtnM,Key_mouseBtnR ,M(MACRO_MOUSE_FAST),___             ,___             ,___
+                     ,___           ,___              ,___ ,___ ,___
+                     ,___           ,___ ,M(MACRO_MOUSE_SLOW) ,M(MACRO_MOUSE_NORMAL) ,M(MACRO_MOUSE_FAST)
+       ,___          ,___           ,___              ,___ ,___ ,___
+       ,Key_mouseBtnM,Key_mouseBtnR ,Key_mouseWarpEnd ,___ ,___ ,___
    ),
+
+   [MOUSE_WARP] = KEYMAP_STACKED
+   (
+    ___, Key_mouseWarpNW, Key_mouseWarpN, Key_mouseWarpNE, ___,
+    Key_mouseWarpEnd, Key_mouseWarpW, Key_mouseWarpIn, Key_mouseWarpE, ___,
+    ___, Key_mouseWarpSW, Key_mouseWarpS, Key_mouseWarpSE, ___, ___,
+    ___, ___, ___, ___, ___, ___,
+
+         ___, ___, ___, ___, ___,
+         ___, ___, ___, ___, ___,
+    ___, ___, ___, ___, ___, ___,
+    ___, ___, ___, ___, ___, ___
+   ),
+
 
   [PLAIN] = KEYMAP_STACKED
   (
@@ -168,6 +184,36 @@ KALEIDOSCOPE_INIT_PLUGINS(
   MouseKeys
 );
 
+int lastPressedMouseMacro = 0;
+
+void updateMouseSpeed(int pressedSpeed) {
+  switch (pressedSpeed) {
+    case MACRO_MOUSE_FAST:
+      MouseKeys.speed = 20;
+      MouseKeys.accelSpeed = 6;
+      MouseKeys.setSpeedLimit(127);
+      MouseKeys.wheelDelay = 50;
+      MouseKeys.wheelSpeed = 20;
+      break;
+    case MACRO_MOUSE_NORMAL:
+      MouseKeys.speed = 10;
+      MouseKeys.accelSpeed = 3;
+      MouseKeys.setSpeedLimit(127);
+      MouseKeys.wheelDelay = 50;
+      MouseKeys.wheelSpeed = 1;
+      break;
+    case MACRO_MOUSE_SLOW:
+      MouseKeys.speed = 3;
+      MouseKeys.accelSpeed = 1;
+      MouseKeys.setSpeedLimit(20);
+      MouseKeys.wheelDelay = 200;
+      MouseKeys.wheelSpeed = 1;
+      break;
+    default:
+      break;
+  }
+}
+
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   if (keyToggledOn(event.state)) {
     switch (macro_id) {
@@ -185,21 +231,42 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
     case MACRO_DBL_BQ:
       Macros.type(PSTR("``"));
       break;
-    case MACRO_MOUSE_FAST:
-      MouseKeys.speed = 10;
-      MouseKeys.accelSpeed = 3;
-      MouseKeys.setSpeedLimit(127);
-      MouseKeys.wheelSpeed = 1;
-      break;
-    case MACRO_MOUSE_SLOW:
-      MouseKeys.speed = 3;
-      MouseKeys.accelSpeed = 1;
-      MouseKeys.setSpeedLimit(20);
-      MouseKeys.wheelSpeed = 10;
-      break;
     default:
       break;
     }
+  }
+
+  switch (macro_id) {
+    case MACRO_MOUSE_FAST:
+      if (keyToggledOn(event.state)) {
+        lastPressedMouseMacro = MACRO_MOUSE_FAST;
+        updateMouseSpeed(lastPressedMouseMacro);
+      } else if (keyToggledOff(event.state)) {
+        if (lastPressedMouseMacro == MACRO_MOUSE_FAST) {
+          lastPressedMouseMacro = MACRO_MOUSE_NORMAL;
+          updateMouseSpeed(lastPressedMouseMacro);
+        }
+      }
+      break;
+    case MACRO_MOUSE_NORMAL:
+      if (keyToggledOn(event.state)) {
+        lastPressedMouseMacro = MACRO_MOUSE_NORMAL;
+        updateMouseSpeed(lastPressedMouseMacro);
+      }
+      break;
+    case MACRO_MOUSE_SLOW:
+      if (keyToggledOn(event.state)) {
+        lastPressedMouseMacro = MACRO_MOUSE_SLOW;
+        updateMouseSpeed(lastPressedMouseMacro);
+      } else if (keyToggledOff(event.state)) {
+        if (lastPressedMouseMacro == MACRO_MOUSE_SLOW) {
+          lastPressedMouseMacro = MACRO_MOUSE_NORMAL;
+          updateMouseSpeed(lastPressedMouseMacro);
+        }
+      }
+      break;
+    default:
+      break;
   }
   return MACRO_NONE;
 }
@@ -222,7 +289,7 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftGui),    // thumb outer
 
-      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // thumb fun
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // between
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(SYMBOL)),    // thumb fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(NUMBER)),    // thumb fun
@@ -232,6 +299,8 @@ void setup() {
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 3), ShiftToLayer(PAREN)),    // index fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
+
+      kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
   )
 
   MouseKeys.speed = 7;
