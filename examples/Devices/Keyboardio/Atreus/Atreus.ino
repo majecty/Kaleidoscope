@@ -80,7 +80,7 @@ KEYMAPS(
   (
        Key_Q   ,Key_W   ,Key_E       ,Key_R         ,Key_T
       ,Key_A   ,Key_S   ,Key_D       ,Key_F         ,Key_G
-      ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Backtick
+      ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Delete
       ,Key_Esc ,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
                      ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
