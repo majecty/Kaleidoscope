@@ -136,7 +136,7 @@ KEYMAPS(
       ,___               ,___             ,___         ,___              ,Key_mouseBtnL  ,Key_mouseBtnM
 
                      ,___           ,___              ,___ ,___ ,___
-                     ,___           ,___ ,M(MACRO_MOUSE_SLOW) ,M(MACRO_MOUSE_NORMAL) ,M(MACRO_MOUSE_FAST)
+                     ,___           ,___ ,M(MACRO_MOUSE_FAST) ,M(MACRO_MOUSE_NORMAL) ,M(MACRO_MOUSE_SLOW)
        ,___          ,___           ,___              ,___ ,___ ,___
        ,Key_mouseBtnM,Key_mouseBtnR ,Key_mouseWarpEnd ,___ ,___ ,___
    ),
@@ -189,7 +189,7 @@ int lastPressedMouseMacro = 0;
 void updateMouseSpeed(int pressedSpeed) {
   switch (pressedSpeed) {
     case MACRO_MOUSE_FAST:
-      MouseKeys.speed = 20;
+      MouseKeys.speed = 30;
       MouseKeys.accelSpeed = 6;
       MouseKeys.setSpeedLimit(127);
       MouseKeys.wheelDelay = 50;
@@ -197,14 +197,14 @@ void updateMouseSpeed(int pressedSpeed) {
       break;
     case MACRO_MOUSE_NORMAL:
       MouseKeys.speed = 10;
-      MouseKeys.accelSpeed = 3;
-      MouseKeys.setSpeedLimit(127);
+      MouseKeys.accelSpeed = 2;
+      MouseKeys.setSpeedLimit(40);
       MouseKeys.wheelDelay = 50;
       MouseKeys.wheelSpeed = 1;
       break;
     case MACRO_MOUSE_SLOW:
-      MouseKeys.speed = 3;
-      MouseKeys.accelSpeed = 1;
+      MouseKeys.speed = 1;
+      MouseKeys.accelSpeed = 4;
       MouseKeys.setSpeedLimit(20);
       MouseKeys.wheelDelay = 200;
       MouseKeys.wheelSpeed = 1;
@@ -303,8 +303,7 @@ void setup() {
       kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
   )
 
-  MouseKeys.speed = 7;
-  MouseKeys.accelSpeed = 3;
+  updateMouseSpeed(MACRO_MOUSE_NORMAL);
   MouseKeys.setWarpGridSize(MOUSE_WARP_GRID_3X3);
 }
 
