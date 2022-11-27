@@ -173,22 +173,22 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
-  EscapeOneShot,
-  EEPROMSettings,
-  EEPROMKeymap,
-  Focus,
-  FocusEEPROMCommand,
-  FocusSettingsCommand,
+                          //  EscapeOneShot,
+                          EEPROMSettings,
+                          //                          EEPROMKeymap,
+                          //                          Focus,
+                          //                          FocusEEPROMCommand,
+                          //                          FocusSettingsCommand,
   Qukeys,
-  SpaceCadet,
+  //  SpaceCadet,
   OneShot,
   Macros,
   DynamicMacros,
   MouseKeys,
-  EscapeOneShotConfig,
+  //  EscapeOneShotConfig,
   FirmwareVersion,
-  LayerNames,
-  SpaceCadetConfig,
+                          //                          LayerNames,
+  //  SpaceCadetConfig,
   OneShotConfig,
   MouseKeysConfig);
 
@@ -281,18 +281,17 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
 
 void setup() {
   Kaleidoscope.setup();
-  EEPROMKeymap.setup(9);
+  //  EEPROMKeymap.setup(10);
 
   DynamicMacros.reserve_storage(48);
 
   LayerNames.reserve_storage(63);
 
-  Layer.move(EEPROMSettings.default_layer());
 
   // To avoid any surprises, SpaceCadet is turned off by default. However, it
   // can be permanently enabled via Chrysalis, so we should only disable it if
   // no configuration exists.
-  SpaceCadetConfig.disableSpaceCadetIfUnconfigured();
+  //  SpaceCadetConfig.disableSpaceCadetIfUnconfigured();
 
   QUKEYS(
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 0), Key_LeftControl),      // A
