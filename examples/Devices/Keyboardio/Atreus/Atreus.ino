@@ -186,36 +186,37 @@ KALEIDOSCOPE_INIT_PLUGINS(
   DynamicMacros,
   MouseKeys,
   //  EscapeOneShotConfig,
-  FirmwareVersion,
+  FirmwareVersion
                           //                          LayerNames,
   //  SpaceCadetConfig,
-  OneShotConfig,
-  MouseKeysConfig);
+                          //  OneShotConfig,
+                          //  MouseKeysConfig
+                          );
 
 int lastPressedMouseMacro = 0;
 
 void updateMouseSpeed(int pressedSpeed) {
   switch (pressedSpeed) {
     case MACRO_MOUSE_FAST:
-      MouseKeys.speed = 30;
-      MouseKeys.accelSpeed = 6;
-      MouseKeys.setSpeedLimit(127);
-      MouseKeys.wheelDelay = 50;
-      MouseKeys.wheelSpeed = 20;
+      MouseKeys.setCursorInitSpeed(30);
+      MouseKeys.setCursorAccelDuration(200); // 6
+      MouseKeys.setCursorBaseSpeed(127);
+      MouseKeys.setScrollInterval(50);
+      //      MouseKeys.wheelSpeed(20);
       break;
     case MACRO_MOUSE_NORMAL:
-      MouseKeys.speed = 10;
-      MouseKeys.accelSpeed = 2;
-      MouseKeys.setSpeedLimit(40);
-      MouseKeys.wheelDelay = 50;
-      MouseKeys.wheelSpeed = 1;
+      MouseKeys.setCursorInitSpeed(10);
+      MouseKeys.setCursorAccelDuration(600); // 2
+      MouseKeys.setCursorBaseSpeed(40);
+      MouseKeys.setScrollInterval(50);
+      //      MouseKeys.wheelSpeed = 1;
       break;
     case MACRO_MOUSE_SLOW:
-      MouseKeys.speed = 1;
-      MouseKeys.accelSpeed = 4;
-      MouseKeys.setSpeedLimit(20);
-      MouseKeys.wheelDelay = 200;
-      MouseKeys.wheelSpeed = 1;
+      MouseKeys.setCursorInitSpeed(1);
+      MouseKeys.setCursorAccelDuration(800); // 4
+      MouseKeys.setCursorBaseSpeed(20);
+      MouseKeys.setScrollInterval(200);
+      //      MouseKeys.wheelSpeed = 1;
       break;
     default:
       break;
