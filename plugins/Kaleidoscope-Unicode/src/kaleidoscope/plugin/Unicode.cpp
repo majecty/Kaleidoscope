@@ -15,7 +15,16 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-Unicode.h>
+#include "kaleidoscope/plugin/Unicode.h"
+
+#include <Arduino.h>              // for delay
+#include <Kaleidoscope-HostOS.h>  // for HostOS, LINUX, MACOS, WINDOWS, OSX
+#include <stdint.h>               // for uint8_t, uint32_t, int8_t
+
+#include "kaleidoscope/Runtime.h"                         // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"                   // for Base<>::HID, VirtualProps::HID
+#include "kaleidoscope/driver/hid/keyboardio/Keyboard.h"  // for Keyboard
+#include "kaleidoscope/key_defs.h"                        // for Key, Key_LeftAlt, KEY_FLAGS, Key_A
 
 namespace kaleidoscope {
 namespace plugin {
@@ -23,7 +32,7 @@ namespace plugin {
 uint8_t Unicode::input_delay_;
 Key Unicode::linux_key_ = Key_U;
 
-void Unicode::start(void) {
+void Unicode::start() {
   switch (::HostOS.os()) {
   case hostos::LINUX:
     kaleidoscope::Runtime.hid().keyboard().pressRawKey(Key_LeftControl);
@@ -52,7 +61,7 @@ void Unicode::start(void) {
   }
 }
 
-void Unicode::input(void) {
+void Unicode::input() {
   switch (::HostOS.os()) {
   case hostos::LINUX:
     break;
@@ -67,7 +76,7 @@ void Unicode::input(void) {
   delay(input_delay_);
 }
 
-void Unicode::end(void) {
+void Unicode::end() {
   switch (::HostOS.os()) {
   case hostos::LINUX:
     kaleidoscope::Runtime.hid().keyboard().pressRawKey(Key_Spacebar);
@@ -133,8 +142,8 @@ void Unicode::type(uint32_t unicode) {
   end();
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 __attribute__((weak)) Key hexToKey(uint8_t hex) {
   uint8_t m;
@@ -146,7 +155,7 @@ __attribute__((weak)) Key hexToKey(uint8_t hex) {
   } else {
     m = Key_A.getKeyCode() + (hex - 0xA);
   }
-  return { m, KEY_FLAGS };
+  return {m, KEY_FLAGS};
 }
 
 __attribute__((weak)) Key hexToKeysWithNumpad(uint8_t hex) {
@@ -181,16 +190,16 @@ __attribute__((weak)) Key hexToKeysWithNumpad(uint8_t hex) {
       break;
     }
   }
-  return { m, KEY_FLAGS };
+  return {m, KEY_FLAGS};
 }
 
-__attribute__((weak)) void unicodeCustomStart(void) {
+__attribute__((weak)) void unicodeCustomStart() {
 }
 
-__attribute__((weak)) void unicodeCustomEnd(void) {
+__attribute__((weak)) void unicodeCustomEnd() {
 }
 
-__attribute__((weak)) void unicodeCustomInput(void) {
+__attribute__((weak)) void unicodeCustomInput() {
 }
 
 kaleidoscope::plugin::Unicode Unicode;

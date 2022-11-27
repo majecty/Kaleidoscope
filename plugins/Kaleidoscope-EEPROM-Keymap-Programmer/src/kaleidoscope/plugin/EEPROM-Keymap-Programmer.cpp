@@ -15,19 +15,26 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-EEPROM-Keymap-Programmer.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/layers.h"
+#include "kaleidoscope/plugin/EEPROM-Keymap-Programmer.h"
+
+#include <Arduino.h>                     // for PSTR
+#include <Kaleidoscope-EEPROM-Keymap.h>  // for EEPROMKeymap
+#include <Kaleidoscope-FocusSerial.h>    // for Focus, FocusSerial
+#include <stdint.h>                      // for uint16_t, uint8_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"         // for Device, Base<>::Storage, VirtualProps::St...
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::E...
+#include "kaleidoscope/key_defs.h"              // for Key, Key_0, Key_1, Key_NoKey
+#include "kaleidoscope/keyswitch_state.h"       // for keyToggledOn, keyToggledOff
+#include "kaleidoscope/layers.h"                // for Layer, Layer_
 
 namespace kaleidoscope {
 namespace plugin {
-uint16_t EEPROMKeymapProgrammer::update_position_;
-EEPROMKeymapProgrammer::state_t EEPROMKeymapProgrammer::state_;
-EEPROMKeymapProgrammer::mode_t EEPROMKeymapProgrammer::mode;
-Key EEPROMKeymapProgrammer::new_key_;
 
-void EEPROMKeymapProgrammer::nextState(void) {
+void EEPROMKeymapProgrammer::nextState() {
   switch (state_) {
   case INACTIVE:
     state_ = WAIT_FOR_KEY;
@@ -47,10 +54,10 @@ void EEPROMKeymapProgrammer::nextState(void) {
   }
 }
 
-void EEPROMKeymapProgrammer::cancel(void) {
+void EEPROMKeymapProgrammer::cancel() {
   update_position_ = 0;
-  new_key_ = Key_NoKey;
-  state_ = INACTIVE;
+  new_key_         = Key_NoKey;
+  state_           = INACTIVE;
 }
 
 EventHandlerResult EEPROMKeymapProgrammer::onKeyEvent(KeyEvent &event) {
@@ -99,13 +106,13 @@ EventHandlerResult EEPROMKeymapProgrammer::onKeyEvent(KeyEvent &event) {
   return EventHandlerResult::EVENT_CONSUMED;
 }
 
-EventHandlerResult EEPROMKeymapProgrammer::onFocusEvent(const char *command) {
+EventHandlerResult EEPROMKeymapProgrammer::onFocusEvent(const char *input) {
   const char *cmd = PSTR("keymap.toggleProgrammer");
 
-  if (::Focus.handleHelp(command, cmd))
-    return EventHandlerResult::OK;
+  if (::Focus.inputMatchesHelp(input))
+    return ::Focus.printHelp(cmd);
 
-  if (strcmp_P(command, cmd) != 0)
+  if (!::Focus.inputMatchesCommand(input, cmd))
     return EventHandlerResult::OK;
 
   if (state_ == INACTIVE)
@@ -116,7 +123,7 @@ EventHandlerResult EEPROMKeymapProgrammer::onFocusEvent(const char *command) {
   return EventHandlerResult::EVENT_CONSUMED;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::EEPROMKeymapProgrammer EEPROMKeymapProgrammer;

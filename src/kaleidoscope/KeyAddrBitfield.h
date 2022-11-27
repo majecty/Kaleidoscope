@@ -16,10 +16,11 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include <Arduino.h>  // for bitClear, bitRead, bitSet, bitWrite
+#include <stdint.h>   // for uint8_t
+#include <string.h>   // for memset
 
-#include "kaleidoscope/KeyAddr.h"
-
+#include "kaleidoscope/KeyAddr.h"  // for KeyAddr
 
 namespace kaleidoscope {
 
@@ -29,7 +30,7 @@ namespace kaleidoscope {
 // when calling this function (e.g. `bitfieldSize<uint16_t>(n)`). The default `UnitType`
 // is `byte` (i.e. `uint8_t`, which is almost always what we want, so most of the time we
 // can also drop that template parameter (e.g. `bitfieldSize(n)`).
-template <typename _UnitType = byte, typename _WidthType>
+template<typename _UnitType = uint8_t, typename _WidthType>
 constexpr _WidthType bitfieldSize(_WidthType n) {
   return ((n - 1) / (8 * sizeof(_UnitType))) + 1;
 }
@@ -39,9 +40,8 @@ constexpr _WidthType bitfieldSize(_WidthType n) {
 class KeyAddrBitfield {
 
  public:
-
-  static constexpr uint8_t size = KeyAddr::upper_limit;
-  static constexpr uint8_t block_size = 8 * sizeof(uint8_t);
+  static constexpr uint8_t size         = KeyAddr::upper_limit;
+  static constexpr uint8_t block_size   = 8 * sizeof(uint8_t);
   static constexpr uint8_t total_blocks = bitfieldSize<uint8_t>(size);
 
   static constexpr uint8_t blockIndex(KeyAddr k) {
@@ -99,26 +99,15 @@ class KeyAddrBitfield {
   }
 
  private:
-
   uint8_t data_[total_blocks] = {};
 
 
   // ----------------------------------------------------------------------------
   // Iterator!
  public:
-  class Iterator;
-  friend class KeyAddrBitfield::Iterator;
-
-  Iterator begin() {
-    return Iterator{*this, 0};
-  }
-  Iterator end() {
-    return Iterator{*this, total_blocks};
-  }
-
   class Iterator {
    public:
-    Iterator(KeyAddrBitfield &bitfield, uint8_t x)
+    Iterator(const KeyAddrBitfield &bitfield, uint8_t x)
       : bitfield_(bitfield), block_index_(x) {}
 
     bool operator!=(const Iterator &other) {
@@ -148,7 +137,7 @@ class KeyAddrBitfield {
 
         // When we're done checking a block, move on to the next one:
         block_index_ += 1;
-        bit_index_  = 0;
+        bit_index_ = 0;
       }
       return false;
     }
@@ -163,17 +152,26 @@ class KeyAddrBitfield {
     }
 
    private:
-    KeyAddrBitfield &bitfield_;
-    uint8_t block_index_;    // index of the block
-    uint8_t bit_index_{0}; // bit index in the block
+    const KeyAddrBitfield &bitfield_;
+    uint8_t block_index_;   // index of the block
+    uint8_t bit_index_{0};  // bit index in the block
     uint8_t block_;
     KeyAddr index_;
 
-  }; // class Iterator {
+  };  // class Iterator {
 
-} __attribute__((packed)); // class KeyAddrBitfield {
+  friend class Iterator;
 
-} // namespace kaleidoscope {
+  Iterator begin() const {
+    return Iterator{*this, 0};
+  }
+  Iterator end() const {
+    return Iterator{*this, total_blocks};
+  }
+
+} __attribute__((packed));  // class KeyAddrBitfield {
+
+}  // namespace kaleidoscope
 
 
 // ================================================================================

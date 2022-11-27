@@ -16,10 +16,12 @@
  */
 
 #pragma once
-#include <Arduino.h>
-#include <KeyboardioHID.h>
 
-#include "kaleidoscope/driver/hid/base/Keyboard.h"
+#include <KeyboardioHID.h>  // for BootKeyboard, BootKeyboard_, Keyboard
+#include <stdint.h>         // for uint8_t, uint16_t
+
+// From Kaleidoscope:
+#include "kaleidoscope/driver/hid/base/Keyboard.h"  // for Keyboard, KeyboardProps
 
 namespace kaleidoscope {
 namespace driver {
@@ -169,17 +171,17 @@ class SystemControlWrapper {
   }
 };
 
-struct KeyboardProps: public base::KeyboardProps {
+struct KeyboardProps : public base::KeyboardProps {
   typedef BootKeyboardWrapper BootKeyboard;
   typedef NKROKeyboardWrapper NKROKeyboard;
   typedef ConsumerControlWrapper ConsumerControl;
   typedef SystemControlWrapper SystemControl;
 };
 
-template <typename _Props>
-class Keyboard: public base::Keyboard<_Props> {};
+template<typename _Props>
+class Keyboard : public base::Keyboard<_Props> {};
 
-}
-}
-}
-}
+}  // namespace keyboardio
+}  // namespace hid
+}  // namespace driver
+}  // namespace kaleidoscope

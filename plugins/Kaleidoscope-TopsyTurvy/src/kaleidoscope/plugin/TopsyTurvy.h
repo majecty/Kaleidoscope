@@ -17,18 +17,25 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-Ranges.h>
+#include <Kaleidoscope-Ranges.h>  // for TT_FIRST, TT_LAST
 
-#define TOPSY(k) Key(kaleidoscope::ranges::TT_FIRST + (Key_ ## k).getKeyCode())
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"              // for Key
+#include "kaleidoscope/plugin.h"                // for Plugin
+
+#define TOPSY(k) ::kaleidoscope::plugin::TopsyTurvyKey(Key_##k)
 
 namespace kaleidoscope {
 namespace plugin {
 
-class TopsyTurvy: public kaleidoscope::Plugin {
- public:
-  TopsyTurvy(void) {}
+constexpr Key TopsyTurvyKey(Key key) {
+  return Key(kaleidoscope::ranges::TT_FIRST + key.getKeyCode());
+}
 
+class TopsyTurvy : public kaleidoscope::Plugin {
+ public:
   EventHandlerResult onKeyEvent(KeyEvent &event);
   EventHandlerResult beforeReportingState(const KeyEvent &event);
 
@@ -38,10 +45,10 @@ class TopsyTurvy: public kaleidoscope::Plugin {
   }
 
  private:
-  static KeyAddr tt_addr_;
+  KeyAddr tt_addr_ = KeyAddr::none();
 };
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::TopsyTurvy TopsyTurvy;

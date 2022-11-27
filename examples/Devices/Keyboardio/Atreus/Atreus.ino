@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*-
  * Atreus -- Chrysalis-enabled Sketch for the Keyboardio Atreus
- * Copyright (C) 2018, 2019  Keyboard.io, Inc
+ * Copyright (C) 2018-2022  Keyboard.io, Inc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,27 +24,29 @@
 #include "Kaleidoscope.h"
 #include "Kaleidoscope-EEPROM-Settings.h"
 #include "Kaleidoscope-EEPROM-Keymap.h"
+#include "Kaleidoscope-Escape-OneShot.h"
+#include "Kaleidoscope-FirmwareVersion.h"
 #include "Kaleidoscope-FocusSerial.h"
 #include "Kaleidoscope-Macros.h"
 #include "Kaleidoscope-MouseKeys.h"
 #include "Kaleidoscope-OneShot.h"
 #include "Kaleidoscope-Qukeys.h"
 #include "Kaleidoscope-SpaceCadet.h"
-#include "Kaleidoscope-MagicCombo.h"
-#include "Kaleidoscope-TapDance.h"
+#include "Kaleidoscope-DynamicMacros.h"
+#include "Kaleidoscope-LayerNames.h"
 
 #define MO(n) ShiftToLayer(n)
 #define TG(n) LockLayer(n)
 
 #define Key_Exclamation LSHIFT(Key_1)
-#define Key_At LSHIFT(Key_2)
-#define Key_Hash LSHIFT(Key_3)
-#define Key_Dollar LSHIFT(Key_4)
-#define Key_Percent LSHIFT(Key_5)
-#define Key_Caret LSHIFT(Key_6)
-#define Key_And LSHIFT(Key_7)
-#define Key_Star LSHIFT(Key_8)
-#define Key_Plus LSHIFT(Key_Equals)
+#define Key_At          LSHIFT(Key_2)
+#define Key_Hash        LSHIFT(Key_3)
+#define Key_Dollar      LSHIFT(Key_4)
+#define Key_Percent     LSHIFT(Key_5)
+#define Key_Caret       LSHIFT(Key_6)
+#define Key_And         LSHIFT(Key_7)
+#define Key_Star        LSHIFT(Key_8)
+#define Key_Plus        LSHIFT(Key_Equals)
 #define Key_Underscore LSHIFT(Key_Minus)
 #define Key_Tilde LSHIFT(Key_Backtick)
 #define Key_Colon LSHIFT(Key_Semicolon)
@@ -74,7 +76,7 @@ enum {
   PLAIN,
 };
 
-/* *INDENT-OFF* */
+// clang-format off
 KEYMAPS(
   [QWERTY] = KEYMAP_STACKED
   (
@@ -168,10 +170,10 @@ KEYMAPS(
        ,Key_Lang1,    Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_Enter
   )
 )
-
-/* *INDENT-ON* */
+// clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
+  EscapeOneShot,
   EEPROMSettings,
   EEPROMKeymap,
   Focus,
@@ -181,8 +183,14 @@ KALEIDOSCOPE_INIT_PLUGINS(
   SpaceCadet,
   OneShot,
   Macros,
-  MouseKeys
-);
+  DynamicMacros,
+  MouseKeys,
+  EscapeOneShotConfig,
+  FirmwareVersion,
+  LayerNames,
+  SpaceCadetConfig,
+  OneShotConfig,
+  MouseKeysConfig);
 
 int lastPressedMouseMacro = 0;
 
@@ -273,8 +281,18 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
 
 void setup() {
   Kaleidoscope.setup();
-  SpaceCadet.disable();
-  EEPROMKeymap.setup(10);
+  EEPROMKeymap.setup(9);
+
+  DynamicMacros.reserve_storage(48);
+
+  LayerNames.reserve_storage(63);
+
+  Layer.move(EEPROMSettings.default_layer());
+
+  // To avoid any surprises, SpaceCadet is turned off by default. However, it
+  // can be permanently enabled via Chrysalis, so we should only disable it if
+  // no configuration exists.
+  SpaceCadetConfig.disableSpaceCadetIfUnconfigured();
 
   QUKEYS(
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 0), Key_LeftControl),      // A

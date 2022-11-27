@@ -16,12 +16,20 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-SpaceCadet.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/key_events.h"
+#include "kaleidoscope/plugin/SpaceCadet.h"
 
-//#include <Kaleidoscope-Devel-ArduinoTrace.h>
+#include <Arduino.h>                   // for F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <stdint.h>                    // for uint16_t, int8_t, uint8_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr, MatrixAddr
+#include "kaleidoscope/KeyAddrEventQueue.h"     // for KeyAddrEventQueue
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/KeyEventTracker.h"       // for KeyEventTracker
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/key_defs.h"              // for Key, Key_LeftParen, Key_LeftShift, Key_Ri...
+#include "kaleidoscope/keyswitch_state.h"       // for keyToggledOn, WAS_PRESSED, keyIsInjected
 
 namespace kaleidoscope {
 namespace plugin {
@@ -33,28 +41,6 @@ SpaceCadet::KeyBinding::KeyBinding(Key input, Key output)
 // Constructor with all three set
 SpaceCadet::KeyBinding::KeyBinding(Key input, Key output, uint16_t timeout)
   : input(input), output(output), timeout(timeout) {}
-
-// =============================================================================
-// Space Cadet class variables
-
-// -----------------------------------------------------------------------------
-// Plugin configuration variables
-
-SpaceCadet::KeyBinding * SpaceCadet::map;
-uint16_t SpaceCadet::time_out = 200;
-
-// -----------------------------------------------------------------------------
-// State variables
-
-uint8_t SpaceCadet::mode_ = SpaceCadet::Mode::ON;
-
-// These variables are used to keep track of any pending unresolved SpaceCadet
-// key that has been pressed. If `pending_map_index_` is negative, it means
-// there is no such pending keypress. Otherwise, it holds the value of the index
-// of that key in the array.
-int8_t SpaceCadet::pending_map_index_ = -1;
-
-KeyEventTracker SpaceCadet::event_tracker_;
 
 // =============================================================================
 // SpaceCadet functions
@@ -72,10 +58,9 @@ SpaceCadet::SpaceCadet() {
     {Key_LeftControl, Key_LeftBracket, 250},
     {Key_RightControl, Key_RightBracket, 250},
     */
-    SPACECADET_MAP_END
-  };
+    SPACECADET_MAP_END};
 
-  map = initialmap;
+  setMap(initialmap);
 }
 
 // =============================================================================
@@ -117,7 +102,7 @@ EventHandlerResult SpaceCadet::onKeyswitchEvent(KeyEvent &event) {
   }
 
   // Do nothing if disabled, but keep the event tracker current.
-  if (mode_ == Mode::OFF)
+  if (settings_.mode == Mode::OFF)
     return EventHandlerResult::OK;
 
   if (!event_queue_.isEmpty()) {
@@ -148,7 +133,7 @@ EventHandlerResult SpaceCadet::onKeyswitchEvent(KeyEvent &event) {
       // A SpaceCadet key has just toggled on. First, if we're in no-delay mode,
       // we need to send the event unchanged (with the primary `Key` value),
       // bypassing other `onKeyswitchEvent()` handlers.
-      if (mode_ == Mode::NO_DELAY)
+      if (settings_.mode == Mode::NO_DELAY)
         Runtime.handleKeyEvent(event);
       // Queue the press event and abort; this press event will be resolved
       // later.
@@ -167,9 +152,9 @@ EventHandlerResult SpaceCadet::afterEachCycle() {
     return EventHandlerResult::OK;
 
   // Get timeout value for the pending key.
-  uint16_t pending_timeout = time_out;
-  if (map[pending_map_index_].timeout != 0)
-    pending_timeout = map[pending_map_index_].timeout;
+  uint16_t pending_timeout = settings_.timeout;
+  if (map_[pending_map_index_].timeout != 0)
+    pending_timeout = map_[pending_map_index_].timeout;
   uint16_t start_time = event_queue_.timestamp(0);
 
   if (Runtime.hasTimeExpired(start_time, pending_timeout)) {
@@ -183,8 +168,8 @@ EventHandlerResult SpaceCadet::afterEachCycle() {
 // Private helper function(s)
 
 int8_t SpaceCadet::getSpaceCadetKeyIndex(Key key) const {
-  for (uint8_t i = 0; !map[i].isEmpty(); ++i) {
-    if (map[i].input == key) {
+  for (uint8_t i = 0; !map_[i].isEmpty(); ++i) {
+    if (map_[i].input == key) {
       return i;
     }
   }
@@ -202,16 +187,16 @@ void SpaceCadet::flushEvent(bool is_tap) {
   if (is_tap && pending_map_index_ >= 0) {
     // If we're in no-delay mode, we should first send the release of the
     // modifier key as a courtesy before sending the tap event.
-    if (mode_ == Mode::NO_DELAY) {
+    if (settings_.mode == Mode::NO_DELAY) {
       Runtime.handleKeyEvent(KeyEvent(event.addr, WAS_PRESSED));
     }
-    event.key = map[pending_map_index_].output;
+    event.key = map_[pending_map_index_].output;
   }
   event_queue_.shift();
-  Runtime.handleKeyswitchEvent(event);
+  Runtime.handleKeyEvent(event);
 }
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::SpaceCadet SpaceCadet;

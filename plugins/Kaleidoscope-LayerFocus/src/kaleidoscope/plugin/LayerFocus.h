@@ -18,20 +18,19 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/plugin.h"                // for Plugin
 
 namespace kaleidoscope {
 namespace plugin {
 
-class LayerFocus: public kaleidoscope::Plugin {
+class LayerFocus : public kaleidoscope::Plugin {
  public:
-  LayerFocus() {}
-
   EventHandlerResult onNameQuery();
-  EventHandlerResult onFocusEvent(const char *command);
+  EventHandlerResult onFocusEvent(const char *input);
 };
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::LayerFocus LayerFocus;

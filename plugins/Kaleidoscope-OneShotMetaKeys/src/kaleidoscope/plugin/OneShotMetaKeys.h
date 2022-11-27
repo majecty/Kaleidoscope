@@ -17,18 +17,17 @@
 
 #pragma once
 
-#include <Kaleidoscope-OneShot.h>
-#include <Kaleidoscope-Ranges.h>
+#include <Kaleidoscope-Ranges.h>  // for OS_ACTIVE_STICKY, OS_META_STICKY
 
-#include "kaleidoscope/event_handler_result.h"
-#include "kaleidoscope/key_defs.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/plugin.h"
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"              // for Key
+#include "kaleidoscope/plugin.h"                // for Plugin
 
 // ----------------------------------------------------------------------------
 // Key constants
-constexpr Key OneShot_MetaStickyKey {kaleidoscope::ranges::OS_META_STICKY};
-constexpr Key OneShot_ActiveStickyKey {kaleidoscope::ranges::OS_ACTIVE_STICKY};
+constexpr Key OneShot_MetaStickyKey{kaleidoscope::ranges::OS_META_STICKY};
+constexpr Key OneShot_ActiveStickyKey{kaleidoscope::ranges::OS_ACTIVE_STICKY};
 
 namespace kaleidoscope {
 namespace plugin {
@@ -43,10 +42,9 @@ class OneShotMetaKeys : public kaleidoscope::Plugin {
 
  private:
   static bool isMetaStickyActive();
-
 };
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::OneShotMetaKeys OneShotMetaKeys;

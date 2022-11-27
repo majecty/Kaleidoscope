@@ -65,6 +65,13 @@ void setup() {
 }
 ```
 
+To enable configuring the plugin via [Focus][focus] (including via
+[Chrysalis][chrysalis]), one will also need the `OneShotConfig` plugin enabled
+in addition.
+
+ [focus]: Kaleidoscope-FocusSerial.md
+ [chrysalis]: https://github.com/keyboardio/Chrysalis
+
 ## Keymap markup
 
 There are two macros the plugin provides:
@@ -230,7 +237,7 @@ modifiers and one-shot layer keys. It has the following methods:
 > Immediately deactivates the one-shot status of any _temporary_
 > one-shot keys. Any keys still being physically held will continue to
 > function as normal modifier/layer-shift keys.
-> 
+>
 > If `with_stickies` is `true` (the default is `false`), _sticky_
 > one-shot keys will also be deactivated, in the same way.
 
@@ -275,45 +282,43 @@ based on `Key` values; it has since be rewritten to be based on
 > not a one-shot key is still pressed any more. This function was
 > mainly used by LED-ActiveModColor, which no longer needs it.
 
-## Plugin properties **[DEPRECATED]**
+## Focus commands
 
-Along with the methods listed above, the `OneShot` object has the
-following properties, too. [Note: these have all been deprecated,
-please use the `.set*Timeout()` methods above instead.]
+When the `OneShotConfig` plugin is enabled, the following Focus commands become
+available:
 
-### `.time_out`
+### `.timeout`
+### `.hold_timeout`
+### `.double_tap_timeout`
 
-> Set this property to the number of milliseconds to wait before timing out and
-> cancelling the one-shot effect (unless interrupted or cancelled before by any
-> other means).
+> These correspond to the `.setTimeout()`, `.setHoldTimeout()`, and
+> `.setDoubleTapTimeout()` methods, and can be used to query or set the
+> respective timeout value. When used without an argument, the command will
+> print the current timeout value. When used with one, it will update it.
+
+### `.auto_modifiers`
+### `.auto_layers`
+
+> Corresponds to the `.enableAutoModifiers()` and `.enableAutoLayers()` methods.
+> Used without an argument, the command will print the current status of the
+> setting, otherwise it will update it.
 >
-> Defaults to 2500.
+> A value of `1` means the setting is enabled, a value of `0` means it is disabled.
 
-### `.hold_time_out`
+### `.stickable_keys`
 
-> Set this property to the number of milliseconds to wait before considering a
-> held one-shot key as intentionally held. In this case, the one-shot effect
-> will not trigger when the key is released. In other words, holding a one-shot
-> key at least this long, and then releasing it, will not trigger the one-shot
-> effect.
->
-> Defaults to 200.
-
-### `.double_tap_time_out`
-
-> Set this property to the number of milliseconds within which a second
-> uninterrupted tap of the same one-shot key will be treated as a sticky-tap.
-> Only takes effect when `.double_tap_sticky` is set.
->
->
-> Setting the property to `-1` will make the double-tap timeout use `.time_out`
-> for its calculations.
->
-> Defaults to -1.
+> Can be used to query or set the bitmap used for controlling the stickability
+> of the oneshot modifier and layer keys. Constructing the bitmap is
+> complicated, and is best done through Chrysalis.
 
 ## Dependencies
 
 * [Kaleidoscope-Ranges](Kaleidoscope-Ranges.md)
+
+If the `OneShotConfig` plugin is enabled, additional dependencies are:
+
+* [Kaleidoscope-EEPROM-Settings](Kaleidoscope-EEPROM-Settings.md)
+* [Kaleidoscope-FocusSerial][focus]
 
 ## Further reading
 

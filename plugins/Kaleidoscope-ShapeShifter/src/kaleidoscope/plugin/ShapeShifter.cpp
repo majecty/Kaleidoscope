@@ -15,14 +15,18 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-ShapeShifter.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/LiveKeys.h"
+#include "kaleidoscope/plugin/ShapeShifter.h"
+
+#include <stdint.h>  // for uint8_t
+
+#include "kaleidoscope/KeyAddr.h"               // for MatrixAddr, MatrixAddr<>::Range, KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/LiveKeys.h"              // for LiveKeys, live_keys
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/key_defs.h"              // for Key, Key_NoKey
 
 namespace kaleidoscope {
 namespace plugin {
-
-const ShapeShifter::dictionary_t *ShapeShifter::dictionary = nullptr;
 
 EventHandlerResult ShapeShifter::onKeyEvent(KeyEvent &event) {
   if (dictionary == nullptr)
@@ -52,7 +56,7 @@ EventHandlerResult ShapeShifter::onKeyEvent(KeyEvent &event) {
     if (live_keys[k].isKeyboardShift())
       shift_detected = true;
   }
-  if (! shift_detected)
+  if (!shift_detected)
     return EventHandlerResult::OK;
 
   repl = dictionary[i].replacement.readFromProgmem();
@@ -62,7 +66,7 @@ EventHandlerResult ShapeShifter::onKeyEvent(KeyEvent &event) {
   return EventHandlerResult::OK;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::ShapeShifter ShapeShifter;

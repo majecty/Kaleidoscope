@@ -1,5 +1,5 @@
 /* Kaleidoscope-Macros - Macro keys for Kaleidoscope.
- * Copyright (C) 2017-2021  Keyboard.io, Inc.
+ * Copyright (C) 2017-2022  Keyboard.io, Inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,100 +14,37 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Kaleidoscope-Macros.h"
-#include "Kaleidoscope-FocusSerial.h"
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/key_events.h"
+#include "kaleidoscope/plugin/Macros.h"
+
+#include <Arduino.h>                   // for pgm_read_byte, delay, F, PROGMEM, __F...
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <Kaleidoscope-Ranges.h>       // for MACRO_FIRST
+#include <stdint.h>                    // for uint8_t
+
+#include "kaleidoscope/KeyEvent.h"                  // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"      // for EventHandlerResult, EventHandlerResul...
+#include "kaleidoscope/key_defs.h"                  // for Key, LSHIFT, Key_NoKey, Key_0, Key_1
+#include "kaleidoscope/keyswitch_state.h"           // for keyToggledOff
+#include "kaleidoscope/plugin/Macros/MacroSteps.h"  // for macro_t, MACRO_NONE, MACRO_ACTION_END
 
 // =============================================================================
 // Default `macroAction()` function definitions
 __attribute__((weak))
-const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
+const macro_t *
+macroAction(uint8_t macro_id, KeyEvent &event) {
   return MACRO_NONE;
 }
-
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-__attribute__((weak))
-const macro_t *macroAction(uint8_t macro_id, uint8_t key_state) {
-  return MACRO_NONE;
-}
-
-const macro_t* deprecatedMacroDown(uint8_t key_state, const macro_t* macro_p) {
-  if (keyToggledOn(key_state))
-    return macro_p;
-  return MACRO_NONE;
-}
-#pragma GCC diagnostic pop
-#endif
 
 // =============================================================================
 // `Macros` plugin code
 namespace kaleidoscope {
 namespace plugin {
 
-constexpr uint8_t press_state = IS_PRESSED | INJECTED;
-constexpr uint8_t release_state = WAS_PRESSED | INJECTED;
-
-// Initialized to zeroes (i.e. `Key_NoKey`)
-Key Macros::active_macro_keys_[];
-
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-MacroKeyEvent Macros::active_macros[];
-byte Macros::active_macro_count;
-KeyAddr Macros::key_addr = KeyAddr::none();
-#pragma GCC diagnostic pop
-#endif
-
 // -----------------------------------------------------------------------------
 // Public helper functions
 
-void Macros::press(Key key) {
-  Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), press_state, key});
-  // This key may remain active for several subsequent events, so we need to
-  // store it in the active macro keys array.
-  for (Key &macro_key : active_macro_keys_) {
-    if (macro_key == Key_NoKey) {
-      macro_key = key;
-      break;
-    }
-  }
-}
-
-void Macros::release(Key key) {
-  // Before sending the release event, we need to remove the key from the active
-  // macro keys array, or it will get inserted into the report anyway.
-  for (Key &macro_key : active_macro_keys_) {
-    if (macro_key == key) {
-      macro_key = Key_NoKey;
-    }
-  }
-  Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), release_state, key});
-}
-
-void Macros::clear() {
-  // Clear the active macro keys array.
-  for (Key &macro_key : active_macro_keys_) {
-    if (macro_key == Key_NoKey)
-      continue;
-    Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), release_state, macro_key});
-    macro_key = Key_NoKey;
-  }
-}
-
-void Macros::tap(Key key) const {
-  // No need to call `press()` & `release()`, because we're immediately
-  // releasing the key after pressing it. It is possible for some other plugin
-  // to insert an event in between, but very unlikely.
-  Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), press_state, key});
-  Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), release_state, key});
-}
-
 void Macros::play(const macro_t *macro_p) {
-  macro_t macro = MACRO_ACTION_END;
+  macro_t macro    = MACRO_ACTION_END;
   uint8_t interval = 0;
   Key key;
 
@@ -168,7 +105,7 @@ void Macros::play(const macro_t *macro_p) {
 
     case MACRO_ACTION_STEP_TAP_SEQUENCE: {
       while (true) {
-        key.setFlags(0);
+        key.setFlags(pgm_read_byte(macro_p++));
         key.setKeyCode(pgm_read_byte(macro_p++));
         if (key == Key_NoKey)
           break;
@@ -311,73 +248,34 @@ EventHandlerResult Macros::onKeyEvent(KeyEvent &event) {
   if (!isMacrosKey(event.key))
     return EventHandlerResult::OK;
 
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  // Set `Macros.key_addr` so that code in the `macroAction()` function can have
-  // access to it. This is not such a good solution, but it's done this way for
-  // backwards compatability. At some point, we should introduce a new
-  // `macroAction(KeyEvent)` function.
-  if (event.addr.isValid()) {
-    key_addr = event.addr;
-  } else {
-    key_addr = KeyAddr::none();
-  }
-#pragma GCC diagnostic pop
-#endif
-
   // Decode the macro ID from the Macros `Key` value.
   uint8_t macro_id = event.key.getRaw() - ranges::MACRO_FIRST;
 
   // Call the new `macroAction(event)` function.
-  const macro_t* macro_ptr = macroAction(macro_id, event);
-
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  // If the new `macroAction()` returned nothing, try the legacy version.
-  if (macro_ptr == MACRO_NONE)
-    macro_ptr = macroAction(macro_id, event.state);
-#pragma GCC diagnostic pop
-#endif
+  const macro_t *macro_ptr = macroAction(macro_id, event);
 
   // Play back the macro pointed to by `macroAction()`
   play(macro_ptr);
 
   if (keyToggledOff(event.state) || !isMacrosKey(event.key)) {
-    // If we toggled off or if the value of `event.key` has changed, send
-    // release events for any active macro keys. Simply clearing
-    // `active_macro_keys_` might be sufficient, but it's probably better to
-    // send the toggle off events so that other plugins get a chance to act on
-    // them.
+    // If a Macros key toggled off or if the value of `event.key` has been
+    // changed by the user-defined `macroAction()` function, we clear the array
+    // of active macro keys so that they won't get "stuck on".  There won't be a
+    // subsequent event that Macros will recognize as actionable, so we need to
+    // do it here.
     clear();
-
-    // Return `OK` to let Kaleidoscope finish processing this event as
-    // normal. This is so that, if the user-defined `macroAction(id, &event)`
-    // function changes the value of `event.key`, it will take effect properly.
-    return EventHandlerResult::OK;
   }
 
-  // No other plugin should be handling Macros keys, and there's nothing more
-  // for Kaleidoscope to do with a key press of a Macros key, so we return
-  // `EVENT_CONSUMED`, causing Kaleidoscope to update `live_keys[]` correctly,
-  // ensuring that the above block will clear `active_macro_keys_` on release,
-  // but not allowing any other plugins to change the `event.key` value, which
-  // would interfere.
-  //return EventHandlerResult::EVENT_CONSUMED;
-  return EventHandlerResult::OK;
-}
-
-EventHandlerResult Macros::beforeReportingState(const KeyEvent &event) {
-  // Do this in beforeReportingState(), instead of `onAddToReport()` because
-  // `live_keys` won't get updated until after the macro sequence is played from
-  // the keypress. This could be changed by either updating `live_keys` manually
-  // ahead of time, or by executing the macro sequence on key release instead of
-  // key press. This is probably the simplest solution.
-  for (Key key : active_macro_keys_) {
-    if (key != Key_NoKey)
-      Runtime.addToReport(key);
-  }
+  // Return `OK` to let Kaleidoscope finish processing this event as normal.
+  // This is so that, if the user-defined `macroAction(id, &event)` function
+  // changes the value of `event.key`, it will take effect properly.  Note that
+  // we're counting on other plugins to not subsequently change the value of
+  // `event.key` if a Macros key has toggled on, because that would leave any
+  // keys in the supplemental array "stuck on".  We could return
+  // `EVENT_CONSUMED` if `event.key` is still a Macros key, but that would lead
+  // to other undesirable plugin interactions (e.g. OneShot keys wouldn't be
+  // triggered to turn off when a Macros key toggles on, assuming that Macros
+  // comes first in `KALEIDOSCOPE_INIT_PLUGINS()`).
   return EventHandlerResult::OK;
 }
 
@@ -385,7 +283,7 @@ EventHandlerResult Macros::onNameQuery() {
   return ::Focus.sendName(F("Macros"));
 }
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::Macros Macros;

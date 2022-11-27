@@ -17,13 +17,15 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include <Arduino.h>  // for bitRead, bitWrite
+#include <stdint.h>   // for uint8_t, uint16_t
 //#include <assert.h>
 
-#include "kaleidoscope/Runtime.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/KeyAddr.h"
-#include "kaleidoscope/keyswitch_state.h"
+#include "kaleidoscope/KeyAddr.h"          // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"         // for KeyEvent, KeyEventId
+#include "kaleidoscope/Runtime.h"          // for Runtime, Runtime_
+#include "kaleidoscope/key_defs.h"         // for Key_Undefined
+#include "kaleidoscope/keyswitch_state.h"  // for IS_PRESSED, WAS_PRESSED, keyToggledOff
 
 namespace kaleidoscope {
 
@@ -34,20 +36,20 @@ namespace kaleidoscope {
 // other data, in order to best serve the specific needs of the Qukeys
 // plugin. Its performance is better for a queue that needs to be searched much
 // more frequently than entries are added or removed.
-template <uint8_t _capacity,
-          typename _Bitfield  = uint8_t,
-          typename _Timestamp = uint16_t>
+template<uint8_t _capacity,
+         typename _Bitfield  = uint8_t,
+         typename _Timestamp = uint16_t>
 class KeyAddrEventQueue {
 
   static_assert(_capacity <= (sizeof(_Bitfield) * 8),
                 "EventQueue error: _Bitfield type too small for _capacity!");
 
  private:
-  uint8_t    length_{0};
-  KeyEventId event_ids_[_capacity];  // NOLINT(runtime/arrays)
-  KeyAddr    addrs_[_capacity];      // NOLINT(runtime/arrays)
-  _Timestamp timestamps_[_capacity]; // NOLINT(runtime/arrays)
-  _Bitfield  release_event_bits_;
+  uint8_t length_{0};
+  KeyEventId event_ids_[_capacity];   // NOLINT(runtime/arrays)
+  KeyAddr addrs_[_capacity];          // NOLINT(runtime/arrays)
+  _Timestamp timestamps_[_capacity];  // NOLINT(runtime/arrays)
+  _Bitfield release_event_bits_;
 
  public:
   uint8_t length() const {
@@ -89,7 +91,7 @@ class KeyAddrEventQueue {
 
   // Append a new event on the end of the queue. Note: the caller is responsible
   // for bounds checking; we don't guard against it here.
-  void append(const KeyEvent& event) {
+  void append(const KeyEvent &event) {
     // assert(length_ < _capacity);
     event_ids_[length_]  = event.id();
     addrs_[length_]      = event.addr;
@@ -103,6 +105,8 @@ class KeyAddrEventQueue {
   // rather than using a ring buffer because we expect it will be called much
   // less often than the queue is searched via a for loop.
   void remove(uint8_t n = 0) {
+    if (n >= length_ || length_ == 0)
+      return;
     // assert(length > n);
     --length_;
     for (uint8_t i{n}; i < length_; ++i) {
@@ -151,7 +155,7 @@ class KeyAddrEventQueue {
   }
 
   // Only call this after `EventTracker::shouldIgnore()` returns `true`.
-  bool shouldAbort(const KeyEvent& event) const {
+  bool shouldAbort(const KeyEvent &event) const {
     return (length_ != 0) && (event.id() - event_ids_[0] >= 0);
   }
 };

@@ -15,12 +15,16 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kaleidoscope/plugin/AutoShift.h"
+#include "kaleidoscope/plugin/AutoShift.h"  // IWYU pragma: associated
 
-#include <Kaleidoscope-EEPROM-Settings.h>
-#include <Kaleidoscope-FocusSerial.h>
+#include <Arduino.h>                       // for PSTR
+#include <Kaleidoscope-EEPROM-Settings.h>  // for EEPROMSettings
+#include <Kaleidoscope-FocusSerial.h>      // for Focus, FocusSerial
+#include <stdint.h>                        // for uint8_t, uint16_t
 
-#include "kaleidoscope/Runtime.h"
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"         // for VirtualProps::Storage, Base<>::Storage
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
 
 namespace kaleidoscope {
 namespace plugin {
@@ -28,44 +32,40 @@ namespace plugin {
 // =============================================================================
 // AutoShift configurator
 
-uint16_t AutoShiftConfig::settings_base_;
-
 EventHandlerResult AutoShiftConfig::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(AutoShift::settings_));
-  uint32_t checker;
+  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(AutoShift::Settings));
 
-  Runtime.storage().get(settings_base_, checker);
-
-  // Check if we have an empty eeprom...
-  if (checker == 0xffffffff) {
-    // ...if the eeprom was empty, store the default settings.
-    Runtime.storage().put(settings_base_, AutoShift::settings_);
+  if (Runtime.storage().isSliceUninitialized(
+        settings_base_,
+        sizeof(AutoShift::Settings))) {
+    // If our slice is uninitialized, set sensible defaults.
+    Runtime.storage().put(settings_base_, ::AutoShift.settings_);
     Runtime.storage().commit();
   }
 
-  Runtime.storage().get(settings_base_, AutoShift::settings_);
+  Runtime.storage().get(settings_base_, ::AutoShift.settings_);
   return EventHandlerResult::OK;
 }
 
-EventHandlerResult AutoShiftConfig::onFocusEvent(const char *command) {
+EventHandlerResult AutoShiftConfig::onFocusEvent(const char *input) {
   enum {
     ENABLED,
     TIMEOUT,
     CATEGORIES,
   } subCommand;
 
-  if (::Focus.handleHelp(command, PSTR("autoshift.enabled\n"
-                                       "autoshift.timeout\n"
-                                       "autoshift.categories")))
-    return EventHandlerResult::OK;
+  const char *cmd_enabled    = PSTR("autoshift.enabled");
+  const char *cmd_timeout    = PSTR("autoshift.timeout");
+  const char *cmd_categories = PSTR("autoshift.categories");
 
-  if (strncmp_P(command, PSTR("autoshift."), 10) != 0)
-    return EventHandlerResult::OK;
-  if (strcmp_P(command + 10, PSTR("enabled")) == 0)
+  if (::Focus.inputMatchesHelp(input))
+    return ::Focus.printHelp(cmd_enabled, cmd_timeout, cmd_categories);
+
+  if (::Focus.inputMatchesCommand(input, cmd_enabled))
     subCommand = ENABLED;
-  else if (strcmp_P(command + 10, PSTR("timeout")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_timeout))
     subCommand = TIMEOUT;
-  else if (strcmp_P(command + 10, PSTR("categories")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_categories))
     subCommand = CATEGORIES;
   else
     return EventHandlerResult::OK;
@@ -110,12 +110,12 @@ EventHandlerResult AutoShiftConfig::onFocusEvent(const char *command) {
     break;
   }
 
-  Runtime.storage().put(settings_base_, AutoShift::settings_);
+  Runtime.storage().put(settings_base_, ::AutoShift.settings_);
   Runtime.storage().commit();
   return EventHandlerResult::EVENT_CONSUMED;
 }
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::AutoShiftConfig AutoShiftConfig;

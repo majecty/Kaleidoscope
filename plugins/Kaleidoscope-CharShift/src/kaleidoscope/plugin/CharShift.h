@@ -17,9 +17,14 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
+#include <Kaleidoscope-Ranges.h>  // for CS_FIRST
+#include <stdint.h>               // for uint8_t
 
-#include <Kaleidoscope-Ranges.h>
+#include "Arduino.h"                            // for PROGMEM
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"              // for Key
+#include "kaleidoscope/plugin.h"                // for Plugin
 
 namespace kaleidoscope {
 namespace plugin {
@@ -54,7 +59,8 @@ class CharShift : public Plugin {
     ///
     /// This constructor is used when defining an array of `KeyPair` objects in
     /// PROGMEM (though it can also be used elsewhere).
-    constexpr KeyPair(Key lower, Key upper) : lower(lower), upper(upper) {}
+    constexpr KeyPair(Key lower, Key upper)
+      : lower(lower), upper(upper) {}
 
     /// Constructor for reading from PROGMEM
     ///
@@ -70,47 +76,47 @@ class CharShift : public Plugin {
   /// `keypairs` array given, which must be a fixed-sized array, not a pointer.
   /// Generally, it will be called via the `KEYPAIRS()` preprocessor macro, not
   /// directly by user code.
-  template <uint8_t _num_keypairs>
-  static void setProgmemKeyPairs(KeyPair const(&keypairs)[_num_keypairs]) {
+  template<uint8_t _num_keypairs>
+  void setProgmemKeyPairs(KeyPair const (&keypairs)[_num_keypairs]) {
     progmem_keypairs_ = keypairs;
-    num_keypairs_ = _num_keypairs;
+    num_keypairs_     = _num_keypairs;
   }
 
  private:
   // A pointer to an array of `KeyPair` objects in PROGMEM
-  static KeyPair const * progmem_keypairs_;
+  KeyPair const *progmem_keypairs_ = nullptr;
   // The size of the PROGMEM array of `KeyPair` objects
-  static uint8_t num_keypairs_;
+  uint8_t num_keypairs_ = 0;
 
   // If a `shift` key needs to be suppressed in `beforeReportingState()`
-  static bool reverse_shift_state_;
+  bool reverse_shift_state_ = false;
 
   /// Test for keys that should be handled by CharShift
-  static bool isCharShiftKey(Key key);
+  bool isCharShiftKey(Key key);
 
   /// Look up the `KeyPair` specified by the given keymap entry
-  static KeyPair decodeCharShiftKey(Key key);
+  KeyPair decodeCharShiftKey(Key key);
 
   /// Get the total number of KeyPairs defined
   ///
   /// This function can be overridden in order to store the `KeyPair` array in
   /// EEPROM instead of PROGMEM.
-  static uint8_t numKeyPairs();
+  uint8_t numKeyPairs();
 
   /// Get the `KeyPair` at the specified index from the defined `KeyPair` array
   ///
   /// This function can be overridden in order to store the `KeyPair` array in
   /// EEPROM instead of PROGMEM.
-  static KeyPair readKeyPair(uint8_t n);
+  KeyPair readKeyPair(uint8_t n);
 
   // Default for `keypairsCount()`: size of the PROGMEM array
-  static uint8_t numProgmemKeyPairs();
+  uint8_t numProgmemKeyPairs();
   // Default for `readKeypair(i)`: fetch the value from PROGMEM
-  static KeyPair readKeyPairFromProgmem(uint8_t n);
+  KeyPair readKeyPairFromProgmem(uint8_t n);
 };
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::CharShift CharShift;
 
@@ -120,12 +126,12 @@ extern kaleidoscope::plugin::CharShift CharShift;
 /// defines them as an array in PROGMEM, and configures `CharShift` to use that
 /// array, automatically setting the count correctly to prevent out-of-bounds
 /// lookups.
-#define CS_KEYS(keypairs...) {                                          \
+#define CS_KEYS(keypairs...)                                                     \
+  {                                                                              \
     static kaleidoscope::plugin::CharShift::KeyPair const kp_table[] PROGMEM = { \
-      keypairs                                                          \
-    };                                                                  \
-    CharShift.setProgmemKeyPairs(kp_table);                             \
-}
+      keypairs};                                                                 \
+    CharShift.setProgmemKeyPairs(kp_table);                                      \
+  }
 
 /// Define an `KeyPair` entry in a keymap
 ///

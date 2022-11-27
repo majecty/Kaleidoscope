@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <Arduino.h>  // IWYU pragma: keep
+
 #include "kaleidoscope/driver/bootloader/Base.h"
 
 namespace kaleidoscope {
@@ -24,14 +26,14 @@ namespace driver {
 namespace bootloader {
 namespace gd32 {
 
-class Base: public kaleidoscope::driver::bootloader::Base {
+class Base : public kaleidoscope::driver::bootloader::Base {
  public:
   static void rebootBootloader() {
     NVIC_SystemReset();
   }
 };
 
-} // namespace gd32
-} // namespace bootloader
-} // namespace driver
-} // namespace kaleidoscope
+}  // namespace gd32
+}  // namespace bootloader
+}  // namespace driver
+}  // namespace kaleidoscope

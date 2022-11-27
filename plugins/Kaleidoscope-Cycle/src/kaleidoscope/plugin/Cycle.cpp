@@ -15,19 +15,22 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-Cycle.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/key_events.h"
+#include "kaleidoscope/plugin/Cycle.h"
+
+#include <Arduino.h>                   // for F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <Kaleidoscope-Ranges.h>       // for CYCLE
+#include <stdint.h>                    // for uint8_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr, MatrixAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::E...
+#include "kaleidoscope/key_defs.h"              // for Key, Key_Backspace, CTRL_HELD, GUI_HELD
+#include "kaleidoscope/keyswitch_state.h"       // for INJECTED, IS_PRESSED, WAS_PRESSED, keyTog...
 
 namespace kaleidoscope {
 namespace plugin {
-// --- state ---
-Key Cycle::last_non_cycle_key_;
-KeyAddr Cycle::cycle_key_addr_{KeyAddr::invalid_state};
-uint8_t Cycle::current_modifier_flags_;
-uint8_t Cycle::cycle_count_;
 
 // --- helpers ---
 
@@ -102,11 +105,10 @@ uint8_t Cycle::toModFlag(uint8_t keyCode) {
   }
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
-__attribute__((weak))
-void cycleAction(Key previous_key, uint8_t cycle_count) {
+__attribute__((weak)) void cycleAction(Key previous_key, uint8_t cycle_count) {
 }
 
 kaleidoscope::plugin::Cycle Cycle;

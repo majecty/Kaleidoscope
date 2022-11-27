@@ -15,7 +15,15 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-FocusSerial.h>
+#include "kaleidoscope/plugin/FocusSerial.h"
+
+#include <Arduino.h>         // for PSTR, __FlashStringHelper, F, strcmp_P
+#include <HardwareSerial.h>  // for HardwareSerial
+#include <string.h>          // for memset
+
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/hooks.h"                 // for Hooks
 
 #ifdef __AVR__
 #include <avr/pgmspace.h>
@@ -24,56 +32,64 @@
 namespace kaleidoscope {
 namespace plugin {
 
-char FocusSerial::command_[32];
-
-void FocusSerial::drain(void) {
-  if (Runtime.serialPort().available())
-    while (Runtime.serialPort().peek() != '\n')
-      Runtime.serialPort().read();
-}
-
 EventHandlerResult FocusSerial::afterEachCycle() {
-  if (Runtime.serialPort().available() == 0)
+  int c;
+  // GD32 doesn't currently autoflush the very last packet. So manually flush here
+  Runtime.serialPort().flush();
+  // If the serial buffer is empty, we don't have any work to do
+  if (Runtime.serialPort().available() == 0) {
     return EventHandlerResult::OK;
+  }
 
-  uint8_t i = 0;
   do {
-    command_[i++] = Runtime.serialPort().read();
-
-    if (Runtime.serialPort().peek() == '\n')
+    // If there's a newline pending, don't read it
+    if (Runtime.serialPort().peek() == NEWLINE) {
       break;
-  } while (command_[i - 1] != ' ' && i < 32);
-  if (command_[i - 1] == ' ')
-    command_[i - 1] = '\0';
-  else
-    command_[i] = '\0';
+    }
+    c = Runtime.serialPort().read();
+    // Don't store the separator; just stash it
+    if (c == SEPARATOR) {
+      break;
+    }
+    input_[buf_cursor_++] = c;
+  } while (buf_cursor_ < (sizeof(input_) - 1) && Runtime.serialPort().available());
 
-  Runtime.onFocusEvent(command_);
+  if ((c != SEPARATOR) && (Runtime.serialPort().peek() != NEWLINE) && buf_cursor_ < (sizeof(input_) - 1)) {
+    // We don't have enough command to work with yet.
+    // Let's leave the buffer around for another cycle
+    return EventHandlerResult::OK;
+  }
 
+  // Then process the command
+  Runtime.onFocusEvent(input_);
+  while (Runtime.serialPort().available()) {
+    c = Runtime.serialPort().read();
+    if (c == NEWLINE) {
+      // newline serves as an end-of-command marker
+      // don't drain the buffer past there
+      break;
+    }
+  }
+  // End of command processing is signalled with a CRLF followed by a single period
   Runtime.serialPort().println(F("\r\n."));
-
-  drain();
-
-  if (Runtime.serialPort().peek() == '\n')
-    Runtime.serialPort().read();
-
+  buf_cursor_ = 0;
+  memset(input_, 0, sizeof(input_));
   return EventHandlerResult::OK;
 }
 
-bool FocusSerial::handleHelp(const char *command,
-                             const char *help_message) {
-  if (strcmp_P(command, PSTR("help")) != 0)
-    return false;
+EventHandlerResult FocusSerial::onFocusEvent(const char *input) {
+  const char *cmd_help    = PSTR("help");
+  const char *cmd_reset   = PSTR("device.reset");
+  const char *cmd_plugins = PSTR("plugins");
 
-  Runtime.serialPort().println((const __FlashStringHelper *)help_message);
-  return true;
-}
+  if (inputMatchesHelp(input))
+    return printHelp(cmd_help, cmd_reset, cmd_plugins);
 
-EventHandlerResult FocusSerial::onFocusEvent(const char *command) {
-  if (handleHelp(command, PSTR("help\nplugins")))
-    return EventHandlerResult::OK;
-
-  if (strcmp_P(command, PSTR("plugins")) == 0) {
+  if (inputMatchesCommand(input, cmd_reset)) {
+    Runtime.device().rebootBootloader();
+    return EventHandlerResult::EVENT_CONSUMED;
+  }
+  if (inputMatchesCommand(input, cmd_plugins)) {
     kaleidoscope::Hooks::onNameQuery();
     return EventHandlerResult::EVENT_CONSUMED;
   }
@@ -81,11 +97,45 @@ EventHandlerResult FocusSerial::onFocusEvent(const char *command) {
   return EventHandlerResult::OK;
 }
 
+#ifndef NDEPRECATED
+bool FocusSerial::handleHelp(const char *input, const char *help_message) {
+  if (!inputMatchesHelp(input)) return false;
+
+  printHelp(help_message);
+  return true;
+}
+#endif
+
 void FocusSerial::printBool(bool b) {
   Runtime.serialPort().print((b) ? F("true") : F("false"));
 }
 
+bool FocusSerial::inputMatchesHelp(const char *input) {
+  return inputMatchesCommand(input, PSTR("help"));
 }
+
+bool FocusSerial::inputMatchesCommand(const char *input, const char *expected) {
+  return strcmp_P(input, expected) == 0;
 }
+
+bool FocusSerial::isEOL() {
+  int c        = -1;
+  auto timeout = Runtime.serialPort().getTimeout();
+  auto start   = millis();
+
+  // Duplicate some of Stream::timedPeek because it's protected
+  do {
+    c = Runtime.serialPort().peek();
+    if (c == NEWLINE) {
+      return true;
+    } else if (c >= 0) {
+      return false;
+    }
+  } while ((millis() - start) < timeout);
+  return true;
+}
+
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::FocusSerial Focus;

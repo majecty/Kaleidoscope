@@ -17,7 +17,10 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
+#include <stdint.h>  // for uint16_t
+
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/plugin.h"                // for Plugin
 
 namespace kaleidoscope {
 namespace plugin {
@@ -31,17 +34,16 @@ typedef enum {
   OTHER,
 
   UNKNOWN = 0xff,
-  AUTO = UNKNOWN
+  AUTO    = UNKNOWN
 } Type;
 
 }
 
 class HostOS : public kaleidoscope::Plugin {
  public:
-  HostOS() {}
   EventHandlerResult onSetup();
 
-  hostos::Type os(void) {
+  hostos::Type os() {
     return os_;
   }
   void os(hostos::Type new_os);
@@ -51,9 +53,11 @@ class HostOS : public kaleidoscope::Plugin {
   uint16_t eeprom_slice_;
   bool is_configured_ = false;
 };
-}
+
+}  // namespace plugin
 
 namespace hostos = plugin::hostos;
-}
+
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::HostOS HostOS;

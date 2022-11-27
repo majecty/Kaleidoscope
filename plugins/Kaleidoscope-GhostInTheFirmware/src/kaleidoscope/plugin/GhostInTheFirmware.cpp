@@ -15,19 +15,21 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-GhostInTheFirmware.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/progmem_helpers.h"
+#include "kaleidoscope/plugin/GhostInTheFirmware.h"
+
+#include <stdint.h>  // for uint16_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/keyswitch_state.h"       // for IS_PRESSED, WAS_PRESSED
+#include "kaleidoscope/progmem_helpers.h"       // for loadFromProgmem
 
 namespace kaleidoscope {
 namespace plugin {
-const GhostInTheFirmware::GhostKey *GhostInTheFirmware::ghost_keys;
-bool GhostInTheFirmware::is_active_ = false;
-uint16_t GhostInTheFirmware::current_pos_ = 0;
-uint16_t GhostInTheFirmware::start_time_;
 
-void GhostInTheFirmware::activate(void) {
+void GhostInTheFirmware::activate() {
   is_active_ = true;
 }
 
@@ -47,9 +49,9 @@ EventHandlerResult GhostInTheFirmware::afterEachCycle() {
     // value (i.e. KeyAddr::none()). If we read this sentinel value, reset and
     // deactivate.
     if (!ghost_key.addr.isValid()) {
-      current_pos_ = 0;
+      current_pos_    = 0;
       ghost_key.delay = 0;
-      is_active_ = false;
+      is_active_      = false;
       return EventHandlerResult::OK;
     }
     // If we're not at the end of the sequence, send the first keypress event,
@@ -80,7 +82,7 @@ EventHandlerResult GhostInTheFirmware::afterEachCycle() {
   return EventHandlerResult::OK;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::GhostInTheFirmware GhostInTheFirmware;

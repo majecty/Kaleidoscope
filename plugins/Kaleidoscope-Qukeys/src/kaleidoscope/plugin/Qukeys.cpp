@@ -18,14 +18,17 @@
 
 #include "kaleidoscope/plugin/Qukeys.h"
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-Ranges.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/progmem_helpers.h"
-#include "kaleidoscope/layers.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/KeyEventTracker.h"
-#include "kaleidoscope/KeyAddrEventQueue.h"
+#include <Arduino.h>                   // for F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <Kaleidoscope-Ranges.h>       // for DUL_FIRST, DUM_FIRST, DUL_LAST, DUM_LAST
+
+#include "kaleidoscope/KeyAddrEventQueue.h"  // for KeyAddrEventQueue
+#include "kaleidoscope/KeyEvent.h"           // for KeyEvent
+#include "kaleidoscope/KeyEventTracker.h"    // for KeyEventTracker
+#include "kaleidoscope/Runtime.h"            // for Runtime, Runtime_
+#include "kaleidoscope/keyswitch_state.h"    // for IS_PRESSED, WAS_PRESSED, keyIsInjected
+#include "kaleidoscope/layers.h"             // for Layer, Layer_
+#include "kaleidoscope/progmem_helpers.h"    // for cloneFromProgmem
 
 namespace kaleidoscope {
 namespace plugin {
@@ -48,12 +51,12 @@ EventHandlerResult Qukeys::onKeyswitchEvent(KeyEvent &event) {
   }
 
   // If event.addr is not a physical key, ignore it; some other plugin injected it.
-  if (! event.addr.isValid() || keyIsInjected(event.state)) {
+  if (!event.addr.isValid() || keyIsInjected(event.state)) {
     return EventHandlerResult::OK;
   }
 
   // If Qukeys is turned off, continue to next plugin.
-  if (! active_) {
+  if (!active_) {
     if (isDualUseKey(event.key)) {
       event.key = queue_head_.primary_key;
     }
@@ -63,7 +66,8 @@ EventHandlerResult Qukeys::onKeyswitchEvent(KeyEvent &event) {
   // If we can't trivially ignore the event, just add it to the queue.
   event_queue_.append(event);
   // In order to prevent overflowing the queue, process it now.
-  while (processQueue());
+  while (processQueue())
+    ;
   // Any event that gets added to the queue gets re-processed later, so we
   // need to abort processing now.
   return EventHandlerResult::ABORT;
@@ -88,19 +92,20 @@ EventHandlerResult Qukeys::afterEachCycle() {
     return EventHandlerResult::OK;
   }
 
-  // Process as many events as we can from the queue.
-  while (processQueue());
-
   // If we get here, that means that the first event in the queue is a qukey
   // press. All that's left to do is to check if it's been held long enough that
   // it has timed out.
   if (Runtime.hasTimeExpired(event_queue_.timestamp(0), hold_timeout_)) {
     // If it's a SpaceCadet-type key, it takes on its primary value, otherwise
     // it takes on its secondary value.
-    Key event_key = isModifierKey(queue_head_.primary_key) ?
-                    queue_head_.primary_key : queue_head_.alternate_key;
+    Key event_key = isModifierKey(queue_head_.primary_key) ? queue_head_.primary_key : queue_head_.alternate_key;
     flushEvent(event_key);
   }
+
+  // Process as many events as we can from the queue.
+  while (processQueue())
+    ;
+
   return EventHandlerResult::OK;
 }
 
@@ -147,7 +152,7 @@ bool Qukeys::processQueue() {
   // it's only there because the plugin was just turned off, we can flush it
   // immediately.
   // Should be able to remove the `active_` check once `deactivate()` gets updated
-  if (! isQukey(queue_head_addr) || ! active_) {
+  if (!isQukey(queue_head_addr) || !active_) {
     flushEvent(queue_head_.primary_key);
     return true;
   }
@@ -201,14 +206,13 @@ bool Qukeys::processQueue() {
       // flush it now. Its state depends on whether or not it's a
       // SpaceCadet-type key.
       if (next_keypress_index == 0 || overlap_threshold_ == 0) {
-        Key event_key = qukey_is_spacecadet ?
-                        queue_head_.alternate_key : queue_head_.primary_key;
+        Key event_key = qukey_is_spacecadet ? queue_head_.alternate_key : queue_head_.primary_key;
         // A qukey just got released in primary state; this might turn out to be
         // the beginning of a tap-repeat sequence, so we set the tap-repeat
         // address and start time to the time of the initial press event before
         // flushing it from the queue. This will come into play when processing
         // the corresponding release event later.
-        tap_repeat_.addr = queue_head_addr;
+        tap_repeat_.addr       = queue_head_addr;
         tap_repeat_.start_time = event_queue_.timestamp(0);
         flushEvent(event_key);
         return true;
@@ -219,7 +223,7 @@ bool Qukeys::processQueue() {
       // will meet the maximum overlap requirement to make the qukey take on its
       // alternate state.
       uint16_t overlap_start = event_queue_.timestamp(next_keypress_index);
-      uint16_t overlap_end = event_queue_.timestamp(i);
+      uint16_t overlap_end   = event_queue_.timestamp(i);
       if (releaseDelayed(overlap_start, overlap_end)) {
         continue;
       }
@@ -317,7 +321,7 @@ bool Qukeys::isQukey(KeyAddr k) {
     if (qukey.addr == k) {
       if ((qukey.layer == layer_index) ||
           (qukey.layer == layer_wildcard)) {
-        queue_head_.primary_key = key;
+        queue_head_.primary_key   = key;
         queue_head_.alternate_key = qukey.alternate_key;
         return true;
       }
@@ -325,7 +329,7 @@ bool Qukeys::isQukey(KeyAddr k) {
   }
 
   // If no matches were found, clear queue_head_ and return false
-  queue_head_.primary_key = key;
+  queue_head_.primary_key   = key;
   queue_head_.alternate_key = Key_Transparent;
   return false;
 }
@@ -351,7 +355,7 @@ bool Qukeys::isDualUseKey(Key key) {
     queue_head_.primary_key = key;
     queue_head_.primary_key.setFlags(0);
 
-    int8_t layer = key.getFlags();
+    int8_t layer              = key.getFlags();
     queue_head_.alternate_key = ShiftToLayer(layer);
     return true;
   }
@@ -373,7 +377,7 @@ bool Qukeys::releaseDelayed(uint16_t overlap_start,
   // divide by the percentage value (as an integer). We use 32-bit integers
   // here to make sure it doesn't overflow when we multiply by 100.
   uint32_t overlap_duration = overlap_end - overlap_start;
-  uint32_t release_timeout = (overlap_duration * 100) / overlap_threshold_;
+  uint32_t release_timeout  = (overlap_duration * 100) / overlap_threshold_;
   return !Runtime.hasTimeExpired(overlap_start, uint16_t(release_timeout));
 }
 
@@ -496,7 +500,7 @@ bool isModifierKey(Key key) {
   return (key.isKeyboardModifier() || key.isLayerShift());
 }
 
-} // namespace plugin {
-} // namespace kaleidoscope {
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::Qukeys Qukeys;

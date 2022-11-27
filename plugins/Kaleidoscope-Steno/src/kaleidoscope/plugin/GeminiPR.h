@@ -17,18 +17,20 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-Ranges.h>
+#include <Kaleidoscope-Ranges.h>  // for STENO_FIRST
+#include <stdint.h>               // for uint8_t
 
 #define S(n) Key(kaleidoscope::plugin::steno::geminipr::n)
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/plugin.h"                // for Plugin
+
 
 namespace kaleidoscope {
 namespace plugin {
 namespace steno {
 class GeminiPR : public kaleidoscope::Plugin {
  public:
-  GeminiPR(void) {}
-
   EventHandlerResult onNameQuery();
   EventHandlerResult onKeyEvent(KeyEvent &event);
 
@@ -42,14 +44,14 @@ enum {
   START = kaleidoscope::ranges::STENO_FIRST,
   FN    = START,
   NUM,
-  N1    = NUM,
+  N1 = NUM,
   N2,
   N3,
   N4,
   N5,
   N6,
   SL,
-  S1    = SL,
+  S1 = SL,
   S2,
   TL,
   KL,
@@ -60,12 +62,12 @@ enum {
   A,
   O,
   STR,
-  ST1   = STR,
+  ST1 = STR,
   ST2,
   RES1,
-  RE1   = RES1,
+  RE1 = RES1,
   RES2,
-  RE2   = RES2,
+  RE2 = RES2,
   PWR,
   ST3,
   ST4,
@@ -87,11 +89,11 @@ enum {
   NB,
   NC,
   ZR,
-  END   = ZR,
+  END = ZR,
 };
-} // namespace geminipr
-} // namespace steno
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace geminipr
+}  // namespace steno
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::steno::GeminiPR GeminiPR;

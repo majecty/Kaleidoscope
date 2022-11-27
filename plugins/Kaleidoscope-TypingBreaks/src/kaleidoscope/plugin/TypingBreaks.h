@@ -17,15 +17,17 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
+#include <stdint.h>  // for uint16_t, uint32_t
+
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/plugin.h"                // for Plugin
 
 namespace kaleidoscope {
 namespace plugin {
 
 class TypingBreaks : public kaleidoscope::Plugin {
  public:
-  TypingBreaks(void) {}
-
   typedef struct settings_t {
     uint16_t idle_time_limit;
     uint16_t lock_time_out;
@@ -38,7 +40,7 @@ class TypingBreaks : public kaleidoscope::Plugin {
 
   EventHandlerResult onNameQuery();
   EventHandlerResult onKeyEvent(KeyEvent &event);
-  EventHandlerResult onFocusEvent(const char *command);
+  EventHandlerResult onFocusEvent(const char *input);
   EventHandlerResult onSetup();
 
  private:
@@ -51,8 +53,9 @@ class TypingBreaks : public kaleidoscope::Plugin {
 
   static uint16_t settings_base_;
 };
-}
-}
+
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::TypingBreaks TypingBreaks;
 

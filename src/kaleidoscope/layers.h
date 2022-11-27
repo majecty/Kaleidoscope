@@ -16,18 +16,34 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include "kaleidoscope/key_defs.h"
-#include "kaleidoscope/keymaps.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/device/device.h"
-#include "kaleidoscope_internal/device.h"
-#include "kaleidoscope_internal/sketch_exploration/sketch_exploration.h"
-#include "kaleidoscope_internal/shortname.h"
-#include "kaleidoscope_internal/deprecations.h"
+#include <Arduino.h>  // for PROGMEM
+#include <stdint.h>   // for uint8_t, int8_t
 
-#ifndef NDEPRECATED
-#include "kaleidoscope/LiveKeys.h"
+#include "kaleidoscope/KeyAddr.h"                                         // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"                                        // for KeyEvent
+#include "kaleidoscope/device/device.h"                                   // for Device
+#include "kaleidoscope/key_defs.h"                                        // for Key
+#include "kaleidoscope/keymaps.h"                                         // IWYU pragma: keep
+#include "kaleidoscope/macro_helpers.h"                                   // for __NL__
+#include "kaleidoscope_internal/device.h"                                 // for device
+#include "kaleidoscope_internal/shortname.h"                              // for _INIT_HID_GETSH...
+#include "kaleidoscope_internal/sketch_exploration/sketch_exploration.h"  // for _INIT_SKETCH_EX...
+// -----------------------------------------------------------------------------
+// Deprecation warning messages
+#include "kaleidoscope_internal/deprecations.h"  // for DEPRECATED
+
+#define _DEPRECATED_MESSAGE_LAYER_ACTIVATE_NEXT                             \
+  "The `Layer.activateNext() function is deprecated, and will be removed\n" \
+  "after 2023-04-06."
+
+#define _DEPRECATED_MESSAGE_LAYER_DEACTIVATE_MOST_RECENT                    \
+  "The `Layer.deactivateMostRecent() function is deprecated, and will be\n" \
+  "removed after 2023-04-06."
+// -----------------------------------------------------------------------------
+
+// clang-format off
+#ifndef MAX_ACTIVE_LAYERS
+#define MAX_ACTIVE_LAYERS 16
 #endif
 
 #define START_KEYMAPS                                                   __NL__ \
@@ -48,6 +64,8 @@
   START_KEYMAPS                                                         __NL__ \
      layers                                                             __NL__ \
   END_KEYMAPS
+
+// clang-format on
 
 extern uint8_t layer_count;
 
@@ -81,19 +99,6 @@ class Layer_ {
   // The `Runtime.lookupKey()` function replaces this one, for plugins that
   // still want to do this same check.
 
-#ifndef NDEPRECATED
-  DEPRECATED(LAYER_LOOKUP)
-  static Key lookup(KeyAddr key_addr) {
-    // First check the keyboard state array
-    Key key = live_keys[key_addr];
-    // If that entry is clear, look up the entry from the active keymap layers
-    if (key == Key_Transparent) {
-      key = lookupOnActiveLayer(key_addr);
-    }
-    return key;
-  }
-#endif
-
   static Key lookupOnActiveLayer(KeyAddr key_addr) {
     uint8_t layer = active_layer_keymap_[key_addr.toInt()];
     return (*getKey)(layer, key_addr);
@@ -104,52 +109,42 @@ class Layer_ {
 
   static void activate(uint8_t layer);
   static void deactivate(uint8_t layer);
+  DEPRECATED(LAYER_ACTIVATE_NEXT)
   static void activateNext();
+  DEPRECATED(LAYER_DEACTIVATE_MOST_RECENT)
   static void deactivateMostRecent();
   static void move(uint8_t layer);
 
   static uint8_t mostRecent() {
-    return active_layers_[active_layer_count_ - 1];
+    uint8_t top_layer = active_layers_[active_layer_count_ - 1];
+    return unshifted(top_layer);
   }
-  static boolean isActive(uint8_t layer);
+  static bool isActive(uint8_t layer);
 
   static void handleLayerKeyEvent(const KeyEvent &event);
 
-#ifndef NDEPRECATED
-  DEPRECATED(LAYER_HANDLE_KEYMAP_KEYSWITCH_EVENT)
-  static void handleKeymapKeyswitchEvent(Key keymapEntry, uint8_t keyState);
-
-  DEPRECATED(LAYER_EVENTHANDLER)
-  static Key eventHandler(Key mappedKey, KeyAddr key_addr, uint8_t keyState);
-#endif
-
-  typedef Key(*GetKeyFunction)(uint8_t layer, KeyAddr key_addr);
+  typedef Key (*GetKeyFunction)(uint8_t layer, KeyAddr key_addr);
   static GetKeyFunction getKey;
 
   static Key getKeyFromPROGMEM(uint8_t layer, KeyAddr key_addr);
 
-#ifndef NDEPRECATED
-  DEPRECATED(LAYER_UPDATELIVECOMPOSITEKEYMAP)
-  static void updateLiveCompositeKeymap(KeyAddr key_addr, Key mappedKey) {
-    live_keys.activate(key_addr, mappedKey);
-  }
-  DEPRECATED(LAYER_UPDATELIVECOMPOSITEKEYMAP)
-  static void updateLiveCompositeKeymap(KeyAddr key_addr) {}
-#endif
-
   static void updateActiveLayers(void);
 
  private:
-  using forEachHandler = void(*)(uint8_t index, uint8_t layer);
+  using forEachHandler = void (*)(uint8_t index, uint8_t layer);
 
  public:
   static void forEachActiveLayer(forEachHandler h);
 
  private:
   static uint8_t active_layer_count_;
-  static int8_t active_layers_[31];
+  static int8_t active_layers_[MAX_ACTIVE_LAYERS];
   static uint8_t active_layer_keymap_[kaleidoscope_internal::device.numKeys()];
+
+  static int8_t stackPosition(uint8_t layer);
+  static void remove(uint8_t stack_index);
+  static uint8_t unshifted(uint8_t layer);
 };
-}
+}  // namespace kaleidoscope
 
 extern kaleidoscope::Layer_ Layer;

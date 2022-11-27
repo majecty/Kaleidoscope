@@ -31,14 +31,16 @@
  * generated code in an entirely different namespace.
  */
 
+// clang-format off
+
 #pragma once
 
-#include "kaleidoscope/macro_helpers.h"
-#include "kaleidoscope/plugin.h"
-#include "kaleidoscope/hooks.h"
-#include "kaleidoscope_internal/eventhandler_signature_check.h"
-#include "kaleidoscope/event_handlers.h"
-#include "kaleidoscope_internal/sketch_exploration/sketch_exploration.h"
+#include "kaleidoscope/event_handlers.h"                                  // for _FOR_EACH_EVENT...
+#include "kaleidoscope/macro_helpers.h"                                   // for __NL__, UNWRAP
+#include "kaleidoscope/plugin.h"  // IWYU pragma: keep
+#include "kaleidoscope_internal/eventhandler_signature_check.h"           // for _PREPARE_EVENT_...
+#include "kaleidoscope_internal/sketch_exploration/plugin_exploration.h"  // for _INIT_PLUGIN_EX...
+#include "kaleidoscope_internal/sketch_exploration/sketch_exploration.h"  // IWYU pragma: keep
 
 // Some words about the design of hook routing:
 //

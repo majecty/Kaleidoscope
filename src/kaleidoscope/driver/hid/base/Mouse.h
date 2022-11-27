@@ -16,7 +16,8 @@
  */
 
 #pragma once
-#include <Arduino.h>
+
+#include <stdint.h>  // for int8_t, uint8_t
 
 namespace kaleidoscope {
 namespace driver {
@@ -41,10 +42,11 @@ struct MouseProps {
   typedef NoMouse Mouse;
 };
 
-template <typename _Props>
+template<typename _Props>
 class Mouse {
  private:
   typename _Props::Mouse mouse_;
+
  public:
   Mouse() {}
 
@@ -76,7 +78,7 @@ class Mouse {
   }
 };
 
-}
-}
-}
-}
+}  // namespace base
+}  // namespace hid
+}  // namespace driver
+}  // namespace kaleidoscope

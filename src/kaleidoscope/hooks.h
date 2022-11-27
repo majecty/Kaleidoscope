@@ -16,37 +16,26 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include "kaleidoscope/KeyEvent.h"                 // IWYU pragma: keep
+#include "kaleidoscope/event_handler_result.h"     // for EventHandlerResult
+#include "kaleidoscope/event_handlers.h"           // for _FOR_EACH_EVENT_HANDLER
+#include "kaleidoscope/macro_helpers.h"            // for __NL__, MAKE_TEMPLATE_SIGNATURE, UNWRAP
+#include "kaleidoscope_internal/event_dispatch.h"  // IWYU pragma: keep
 
 namespace kaleidoscope {
-class Key;
-}
+// Forward declarations to enable friend declarations.
+class Layer_;    // IWYU pragma: keep
+class Runtime_;  // IWYU pragma: keep
 
-#include "kaleidoscope/KeyAddr.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/plugin.h"
-#include "kaleidoscope/event_handlers.h"
-
-// Forward declaration required to enable friend declarations
-// in class Hooks.
-class kaleidoscope_;
-#ifndef NDEPRECATED
-extern void handleKeyswitchEvent(kaleidoscope::Key mappedKey, KeyAddr key_addr, uint8_t keyState);
-#endif
-
-namespace kaleidoscope {
 namespace plugin {
-// Forward declaration to enable friend declarations.
-class LEDControl;
+// Forward declarations to enable friend declarations.
 class FocusSerial;
-}
-
-// Forward declaration to enable friend declarations.
-class Layer_;
+class LEDControl;
+}  // namespace plugin
 
 namespace sketch_exploration {
 void pluginsExploreSketch();
-} // namespace sketch_exploration
+}  // namespace sketch_exploration
 
 // The reason why the hook routing entry point functions live within
 // class Hooks and not directly within a namespace is, that we want
@@ -64,23 +53,17 @@ class Hooks {
 
   // Runtime_ calls Hooks::onSetup, Hooks::beforeReportingState
   // and Hooks::afterEachCycle.
+  friend class Layer_;
   friend class Runtime_;
-  friend class ::kaleidoscope::plugin::FocusSerial;
-  friend class ::kaleidoscope::Layer_;
-  friend class ::kaleidoscope::plugin::LEDControl;
-  friend void ::kaleidoscope::sketch_exploration::pluginsExploreSketch();
-
-#ifndef NDEPRECATED
-  // ::handleKeyswitchEvent(...) calls Hooks::onKeyswitchEvent.
-  friend void ::handleKeyswitchEvent(kaleidoscope::Key mappedKey,
-                                     KeyAddr key_addr, uint8_t keyState);
-#endif
+  friend class plugin::FocusSerial;
+  friend class plugin::LEDControl;
+  friend void sketch_exploration::pluginsExploreSketch();
 
  private:
-
   // The following private functions are just to be called by classes
   // and functions that are declared as friends above.
 
+  // clang-format off
 #define DEFINE_WEAK_HOOK_FUNCTION(                                             \
     HOOK_NAME, HOOK_VERSION, DEPRECATION_TAG,                                  \
     SHOULD_EXIT_IF_RESULT_NOT_OK,                                              \
@@ -93,6 +76,7 @@ class Hooks {
   _FOR_EACH_EVENT_HANDLER(DEFINE_WEAK_HOOK_FUNCTION)
 
 #undef DEFINE_WEAK_HOOK_FUNCTION
+  // clang-format on
 };
 
-}
+}  // namespace kaleidoscope

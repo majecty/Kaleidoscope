@@ -16,9 +16,10 @@
  */
 
 #pragma once
-#include <Arduino.h>
 
-#include "kaleidoscope/key_defs.h"
+#include <stdint.h>  // for uint8_t
+
+#include "kaleidoscope/key_defs.h"  // for Key, Key_LeftAlt, Key_LeftControl, Key_LeftGui, Key_L...
 
 #ifndef HID_BOOT_PROTOCOL
 #define HID_BOOT_PROTOCOL 0
@@ -127,13 +128,14 @@ struct KeyboardProps {
   typedef NoSystemControl SystemControl;
 };
 
-template <typename _Props>
+template<typename _Props>
 class Keyboard {
  private:
   typename _Props::BootKeyboard boot_keyboard_;
   typename _Props::NKROKeyboard nkro_keyboard_;
   typename _Props::ConsumerControl consumer_control_;
   typename _Props::SystemControl system_control_;
+
  public:
   Keyboard() {}
 
@@ -176,11 +178,6 @@ class Keyboard {
     if (keycode == last_system_control_keycode_) {
       system_control_.release();
     }
-  }
-
-  DEPRECATED(HID_KEYBOARD_PRESSKEY_TOGGLEDON)
-  void pressKey(Key pressed_key, bool toggled_on) __attribute__((noinline)) {
-    pressKey(pressed_key);
   }
 
   void pressKey(Key pressed_key) __attribute__((noinline)) {
@@ -234,7 +231,7 @@ class Keyboard {
     return nkro_keyboard_.isKeyPressed(key.getKeyCode());
   }
 
-  boolean isModifierKeyActive(Key modifier_key) {
+  bool isModifierKeyActive(Key modifier_key) {
     if (boot_keyboard_.getProtocol() == HID_BOOT_PROTOCOL) {
       return boot_keyboard_.isModifierActive(modifier_key.getKeyCode());
     }
@@ -242,7 +239,7 @@ class Keyboard {
     return nkro_keyboard_.isModifierActive(modifier_key.getKeyCode());
   }
 
-  boolean wasModifierKeyActive(Key modifier_key) {
+  bool wasModifierKeyActive(Key modifier_key) {
     if (boot_keyboard_.getProtocol() == HID_BOOT_PROTOCOL) {
       return boot_keyboard_.wasModifierActive(modifier_key.getKeyCode());
     }
@@ -250,7 +247,7 @@ class Keyboard {
     return nkro_keyboard_.wasModifierActive(modifier_key.getKeyCode());
   }
 
-  boolean isAnyModifierKeyActive() {
+  bool isAnyModifierKeyActive() {
     if (boot_keyboard_.getProtocol() == HID_BOOT_PROTOCOL) {
       return boot_keyboard_.isAnyModifierActive();
     }
@@ -258,7 +255,7 @@ class Keyboard {
     return nkro_keyboard_.isAnyModifierActive();
   }
 
-  boolean wasAnyModifierKeyActive() {
+  bool wasAnyModifierKeyActive() {
     if (boot_keyboard_.getProtocol() == HID_BOOT_PROTOCOL) {
       return boot_keyboard_.wasAnyModifierActive();
     }
@@ -295,7 +292,7 @@ class Keyboard {
   // the upcoming USB HID report and passes them through to KeyboardioHID
   // immediately
 
-  void pressModifiers(byte flags) {
+  void pressModifiers(uint8_t flags) {
     if (flags & SHIFT_HELD) {
       pressRawKey(Key_LeftShift);
     }
@@ -317,7 +314,7 @@ class Keyboard {
   // the upcoming USB HID report and passes them through to KeyboardioHID
   // immediately
 
-  void releaseModifiers(byte flags) {
+  void releaseModifiers(uint8_t flags) {
     if (flags & SHIFT_HELD) {
       releaseRawKey(Key_LeftShift);
     }
@@ -334,10 +331,9 @@ class Keyboard {
       releaseRawKey(Key_LeftGui);
     }
   }
-
 };
 
-}
-}
-}
-}
+}  // namespace base
+}  // namespace hid
+}  // namespace driver
+}  // namespace kaleidoscope

@@ -17,11 +17,12 @@
 
 #pragma once
 
-#ifdef ARDUINO_GD32_keyboardio_model_100
+#ifdef ARDUINO_keyboardio_model_100
 
 #include <Arduino.h>
 
-#define CRGB(r,g,b) (cRGB){b, g, r}
+#define CRGB(r, g, b) \
+  (cRGB) { b, g, r }
 
 struct cRGB {
   uint8_t b;
@@ -29,24 +30,36 @@ struct cRGB {
   uint8_t r;
 };
 
-#include "kaleidoscope/device/ATmega32U4Keyboard.h"
 
-#include "kaleidoscope/driver/keyscanner/Base.h"
-#include "kaleidoscope/driver/keyboardio/Model100Side.h"
-#include "kaleidoscope/driver/led/Base.h"
+#include "kaleidoscope/device/Base.h"
 #include "kaleidoscope/driver/bootloader/gd32/Base.h"
+#include "kaleidoscope/driver/hid/Base.h"
+#include "kaleidoscope/driver/hid/Keyboardio.h"
+#include "kaleidoscope/driver/keyboardio/Model100Side.h"
+#include "kaleidoscope/driver/keyscanner/Base.h"
+#include "kaleidoscope/driver/led/Base.h"
+#include "kaleidoscope/driver/mcu/GD32.h"
+#include "kaleidoscope/driver/storage/GD32Flash.h"
+
 
 namespace kaleidoscope {
 namespace device {
 namespace keyboardio {
 
+struct Model100StorageProps : public kaleidoscope::driver::storage::GD32FlashProps {
+  static constexpr uint16_t length = 16384;
+};
+
+
 struct Model100LEDDriverProps : public kaleidoscope::driver::led::BaseProps {
-  static constexpr uint8_t led_count = 64;
+  static constexpr uint8_t led_count             = 64;
   static constexpr uint8_t key_led_map[] PROGMEM = {
+    // clang-format off
     3, 4, 11, 12, 19, 20, 26, 27,     36, 37, 43, 44, 51, 52, 59, 60,
     2, 5, 10, 13, 18, 21, 25, 28,     35, 38, 42, 45, 50, 53, 58, 61,
-    1, 6, 9, 14, 17, 22, 24, 29,     34, 39, 41, 46, 49, 54, 57, 62,
-    0, 7, 8, 15, 16, 23, 31, 30,     33, 32, 40, 47, 48, 55, 56, 63,
+    1, 6, 9,  14, 17, 22, 24, 29,     34, 39, 41, 46, 49, 54, 57, 62,
+    0, 7, 8,  15, 16, 23, 31, 30,     33, 32, 40, 47, 48, 55, 56, 63,
+    // clang-format on
   };
 };
 
@@ -60,17 +73,16 @@ class Model100LEDDriver : public kaleidoscope::driver::led::Base<Model100LEDDriv
   static uint8_t getBrightness();
 
   static void enableHighPowerLeds();
-  static boolean ledPowerFault();
 
  private:
   static bool isLEDChanged;
 };
-#else // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#else   // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 class Model100LEDDriver;
-#endif // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#endif  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 
 struct Model100KeyScannerProps : public kaleidoscope::driver::keyscanner::BaseProps {
-  static constexpr uint8_t matrix_rows = 4;
+  static constexpr uint8_t matrix_rows    = 4;
   static constexpr uint8_t matrix_columns = 16;
   typedef MatrixAddr<matrix_rows, matrix_columns> KeyAddr;
 };
@@ -79,6 +91,7 @@ struct Model100KeyScannerProps : public kaleidoscope::driver::keyscanner::BasePr
 class Model100KeyScanner : public kaleidoscope::driver::keyscanner::Base<Model100KeyScannerProps> {
  private:
   typedef Model100KeyScanner ThisType;
+
  public:
   static void setup();
   static void scanMatrix();
@@ -92,6 +105,8 @@ class Model100KeyScanner : public kaleidoscope::driver::keyscanner::Base<Model10
   static uint8_t previousPressedKeyswitchCount();
 
   static void setKeyscanInterval(uint8_t interval);
+  static void enableScannerPower();
+  static void disableScannerPower();
 
  protected:
   static driver::keyboardio::keydata_t leftHandState;
@@ -99,20 +114,38 @@ class Model100KeyScanner : public kaleidoscope::driver::keyscanner::Base<Model10
   static driver::keyboardio::keydata_t previousLeftHandState;
   static driver::keyboardio::keydata_t previousRightHandState;
 
-  static void actOnHalfRow(byte row, byte colState, byte colPrevState, byte startPos);
-  static void enableScannerPower();
+  static void actOnHalfRow(uint8_t row, uint8_t colState, uint8_t colPrevState, uint8_t startPos);
 };
-#else // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#else   // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 class Model100KeyScanner;
-#endif // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#endif  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 
-struct Model100Props : public kaleidoscope::device::BaseKeyboardProps {
-  typedef Model100LEDDriverProps  LEDDriverProps;
+
+// If we need to override HID props:
+struct Model100HIDProps : public kaleidoscope::driver::hid::KeyboardioProps {
+  //typedef kaleidoscope::driver::hid::base::AbsoluteMouseProps AbsoluteMouseProps;
+  //typedef kaleidoscope::driver::hid::base::AbsoluteMouse<AbsoluteMouseProps> AbsoluteMouse;
+};
+
+
+struct Model100Props : public kaleidoscope::device::BaseProps {
+  typedef Model100HIDProps HIDProps;
+  typedef kaleidoscope::driver::hid::Keyboardio<HIDProps> HID;
+
+  typedef Model100LEDDriverProps LEDDriverProps;
   typedef Model100LEDDriver LEDDriver;
+
   typedef Model100KeyScannerProps KeyScannerProps;
   typedef Model100KeyScanner KeyScanner;
-  typedef kaleidoscope::driver::bootloader::gd32::Base BootLoader;
+
+  typedef Model100StorageProps StorageProps;
+  typedef kaleidoscope::driver::storage::GD32Flash<StorageProps> Storage;
+
+  typedef kaleidoscope::driver::bootloader::gd32::Base Bootloader;
   static constexpr const char *short_name = "kbio100";
+
+  typedef kaleidoscope::driver::mcu::GD32Props MCUProps;
+  typedef kaleidoscope::driver::mcu::GD32<MCUProps> MCU;
 };
 
 #ifndef KALEIDOSCOPE_VIRTUAL_BUILD
@@ -121,17 +154,23 @@ class Model100 : public kaleidoscope::device::Base<Model100Props> {
  public:
   void setup();
 
+  auto serialPort() -> decltype(Serial) & {
+    return Serial;
+  }
+  static void rebootBootloader();
   static void enableHardwareTestMode();
 };
 
-#endif // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#endif  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 
-} // namespace keyboardio
-} // namespace device
+}  // namespace keyboardio
+}  // namespace device
 
 EXPORT_DEVICE(kaleidoscope::device::keyboardio::Model100)
 
-}
+}  // namespace kaleidoscope
+
+// clang-format off
 
 #define PER_KEY_DATA_STACKED(dflt,                                    \
                r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6,                \

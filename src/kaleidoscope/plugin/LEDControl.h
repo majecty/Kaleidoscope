@@ -16,27 +16,36 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
-#include "kaleidoscope/plugin/LEDMode.h"
+#include <stdint.h>  // for uint8_t, uint16_t
 
-#ifndef NDEPRECATED
+#include "kaleidoscope/KeyAddr.h"                  // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"                 // for KeyEvent
+#include "kaleidoscope/Runtime.h"                  // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"            // for cRGB, Device, Base<>::LEDDriver, Virtu...
+#include "kaleidoscope/event_handler_result.h"     // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"                 // for Key, IS_INTERNAL, KEY_FLAGS, SYNTHETIC
+#include "kaleidoscope/plugin.h"                   // for Plugin
+#include "kaleidoscope/plugin/LEDMode.h"           // for LEDMode
+#include "kaleidoscope/plugin/LEDModeInterface.h"  // for LEDModeInterface
+// -----------------------------------------------------------------------------
+// Deprecation warning messages
+#include "kaleidoscope_internal/deprecations.h"  // for DEPRECATED
 
-#define _DEPRECATED_MESSAGE_LEDCONTROL_SYNCDELAY                              __NL__ \
-  "The `LEDControl.syncDelay` variable has been deprecated.\n"                __NL__ \
-  "Please use the `LEDControl.setInterval()` function instead."
+#define _DEPRECATED_MESSAGE_FOCUSLEDCOMMAND                                  \
+  "The `FocusLEDCommand` plugin is deprecated. For its most useful\n"        \
+  "functionality - led.brightness -, please see the `LEDBrightnessConfig`\n" \
+  "plugin.\n"                                                                \
+  "This plugin will be removed after 2023-01-01."
+// -----------------------------------------------------------------------------
 
-#endif
+constexpr uint8_t LED_TOGGLE = 0b00000001;  // Synthetic, internal
 
-#define LED_TOGGLE   B00000001  // Synthetic, internal
-
-#define Key_LEDEffectNext Key(0, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE)
-#define Key_LEDEffectPrevious Key(1, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE)
-#define Key_LEDToggle Key(2, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE)
+constexpr Key Key_LEDEffectNext     = Key(0, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE);
+constexpr Key Key_LEDEffectPrevious = Key(1, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE);
+constexpr Key Key_LEDToggle         = Key(2, KEY_FLAGS | SYNTHETIC | IS_INTERNAL | LED_TOGGLE);
 
 namespace kaleidoscope {
 namespace plugin {
-
-class LEDMode;
 
 class LEDControl : public kaleidoscope::Plugin {
  public:
@@ -68,8 +77,7 @@ class LEDControl : public kaleidoscope::Plugin {
   }
   template<typename LEDMode__>
   static LEDMode__ *get_mode() {
-    return static_cast<LEDMode__*>(cur_led_mode_);
-
+    return static_cast<LEDMode__ *>(cur_led_mode_);
   }
 
   static void refreshAll() {
@@ -100,19 +108,8 @@ class LEDControl : public kaleidoscope::Plugin {
   //
   static void activate(LEDModeInterface *plugin);
 
-#ifndef NDEPRECATED
-  DEPRECATED(LEDCONTROL_SYNCDELAY)
-  static uint8_t syncDelay;
-#endif
-
   static void setSyncInterval(uint8_t interval) {
     sync_interval_ = interval;
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    syncDelay = interval;
-#pragma GCC diagnostic pop
-#endif
   }
 
   EventHandlerResult onSetup();
@@ -141,16 +138,17 @@ class LEDControl : public kaleidoscope::Plugin {
   static bool enabled_;
 };
 
+DEPRECATED(FOCUSLEDCOMMAND)
 class FocusLEDCommand : public Plugin {
  public:
   FocusLEDCommand() {}
 
-  EventHandlerResult onFocusEvent(const char *command);
+  EventHandlerResult onFocusEvent(const char *input);
 };
 
-}
+}  // namespace plugin
 
-}
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::LEDControl LEDControl;
 extern kaleidoscope::plugin::FocusLEDCommand FocusLEDCommand;

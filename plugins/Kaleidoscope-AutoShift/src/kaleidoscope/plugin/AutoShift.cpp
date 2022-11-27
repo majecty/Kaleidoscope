@@ -17,34 +17,18 @@
 
 #include "kaleidoscope/plugin/AutoShift.h"
 
-#include "kaleidoscope/KeyAddr.h"
-#include "kaleidoscope/key_defs.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/Runtime.h"
+#include "kaleidoscope/KeyAddr.h"          // for KeyAddr, MatrixAddr
+#include "kaleidoscope/KeyEvent.h"         // for KeyEvent
+#include "kaleidoscope/KeyEventTracker.h"  // for KeyEventTracker
+#include "kaleidoscope/Runtime.h"          // for Runtime, Runtime_
+#include "kaleidoscope/key_defs.h"         // for Key, Key_0, Key_1, Key_A, Key_F1, Key_F12, Key...
+#include "kaleidoscope/keyswitch_state.h"  // for keyToggledOn, keyIsInjected
+
+// IWYU pragma: no_include "HIDAliases.h"
 
 namespace kaleidoscope {
 namespace plugin {
 
-// =============================================================================
-// AutoShift static class variables
-
-// Configuration settings that can be saved to persistent storage.
-AutoShift::Settings AutoShift::settings_ = {
-  .enabled = true,
-  .timeout = 175,
-  .enabled_categories = AutoShift::Categories::printableKeys(),
-};
-
-// The event tracker ensures that the `onKeyswitchEvent()` handler will follow
-// the rules in order to avoid interference with other plugins and prevent
-// processing the same event more than once.
-KeyEventTracker AutoShift::event_tracker_;
-
-// If there's a delayed keypress from AutoShift, this stored event will contain
-// a valid `KeyAddr`.  The default constructor produces an event addr of
-// `KeyAddr::none()`, so the plugin will start in an inactive state.
-KeyEvent pending_event_;
 
 // =============================================================================
 // AutoShift functions
@@ -59,8 +43,7 @@ void AutoShift::disable() {
 // -----------------------------------------------------------------------------
 // Test for whether or not to apply AutoShift to a given `Key`.  This function
 // can be overridden from the user sketch.
-__attribute__((weak))
-bool AutoShift::isAutoShiftable(Key key) {
+__attribute__((weak)) bool AutoShift::isAutoShiftable(Key key) {
   return enabledForKey(key);
 }
 
@@ -204,7 +187,7 @@ void AutoShift::flushEvent(bool is_long_press) {
     return;
   KeyEvent event = queue_.event(0);
   if (is_long_press) {
-    event.key = Runtime.lookupKey(event.addr);
+    event.key     = Runtime.lookupKey(event.addr);
     uint8_t flags = event.key.getFlags();
     flags ^= SHIFT_HELD;
     event.key.setFlags(flags);
@@ -213,7 +196,7 @@ void AutoShift::flushEvent(bool is_long_press) {
   Runtime.handleKeyswitchEvent(event);
 }
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::AutoShift AutoShift;

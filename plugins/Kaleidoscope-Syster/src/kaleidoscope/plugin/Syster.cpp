@@ -15,32 +15,30 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-Syster.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/key_events.h"
+#include "kaleidoscope/plugin/Syster.h"
 
-#undef SYSTER
+#include <Arduino.h>                   // for F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <stdint.h>                    // for int8_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/key_defs.h"              // for Key, Key_Backspace, Key_1, Key_A, Key_0
+#include "kaleidoscope/keyswitch_state.h"       // for INJECTED, WAS_PRESSED, keyToggledOn, IS_P...
 
 namespace kaleidoscope {
 namespace plugin {
 
-// --- state ---
-char Syster::symbol_[SYSTER_MAX_SYMBOL_LENGTH + 1];
-uint8_t Syster::symbol_pos_;
-bool Syster::is_active_;
-
-// --- helpers ---
-#define isSyster(k) (k == kaleidoscope::ranges::SYSTER)
-
 // --- api ---
-void Syster::reset(void) {
+void Syster::reset() {
   symbol_pos_ = 0;
-  symbol_[0] = 0;
-  is_active_ = false;
+  symbol_[0]  = 0;
+  is_active_  = false;
 }
 
-bool Syster::is_active(void) {
+bool Syster::is_active() {
   return is_active_;
 }
 
@@ -54,7 +52,7 @@ EventHandlerResult Syster::onKeyEvent(KeyEvent &event) {
     // If Syster isn't actively matching an input sequence, we're only looking
     // for the special Syster `Key` value; anything else gets passed through
     // immediately.
-    if (!isSyster(event.key))
+    if (event.key != Key_Syster)
       return EventHandlerResult::OK;
 
     // It's a Syster Key; activate the plugin as soon as it toggles on, so we
@@ -73,7 +71,7 @@ EventHandlerResult Syster::onKeyEvent(KeyEvent &event) {
 
   // If a Syster key gets pressed while we're reading an input sequence, ignore
   // it. This could be turned into a "reset" where we erase the abandoned input.
-  if (isSyster(event.key)) {
+  if (event.key == Key_Syster) {
     return EventHandlerResult::EVENT_CONSUMED;
   }
 
@@ -132,7 +130,7 @@ EventHandlerResult Syster::onKeyEvent(KeyEvent &event) {
   return EventHandlerResult::OK;
 }
 
-} // namespace plugin
+}  // namespace plugin
 
 void eraseChars(int8_t n) {
   // For the `event.addr`, we could track the address of the Syster key, but it
@@ -159,7 +157,7 @@ void eraseChars(int8_t n) {
   Runtime.handleKeyEvent(event);
 }
 
-} // namespace kaleidoscope
+}  // namespace kaleidoscope
 
 
 __attribute__((weak)) const char keyToChar(Key key) {
@@ -167,9 +165,9 @@ __attribute__((weak)) const char keyToChar(Key key) {
     return 0;
 
   switch (key.getKeyCode()) {
-  case Key_A.getKeyCode() ... Key_Z.getKeyCode():
+  case Key_A.getKeyCode()... Key_Z.getKeyCode():
     return 'a' + (key.getKeyCode() - Key_A.getKeyCode());
-  case Key_1.getKeyCode() ... Key_9.getKeyCode():
+  case Key_1.getKeyCode()... Key_9.getKeyCode():
     return '1' + (key.getKeyCode() - Key_1.getKeyCode());
   case Key_0.getKeyCode():
     return '0';

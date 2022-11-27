@@ -16,12 +16,17 @@
 
 #pragma once
 
-#include "kaleidoscope_internal/device.h"
-#include "kaleidoscope/event_handler_result.h"
-#include "kaleidoscope/hooks.h"
-#include "kaleidoscope/KeyEvent.h"
-#include "kaleidoscope/LiveKeys.h"
-#include "kaleidoscope/layers.h"
+#include <stdint.h>  // for uint32_t
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/LiveKeys.h"              // for LiveKeys, live_keys
+#include "kaleidoscope/device/device.h"         // for Device
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/hooks.h"                 // for Hooks
+#include "kaleidoscope/key_defs.h"              // for Key, Key_Transparent
+#include "kaleidoscope/layers.h"                // for Layer, Layer_
+#include "kaleidoscope_internal/device.h"       // for device
 
 namespace kaleidoscope {
 
@@ -120,15 +125,15 @@ class Runtime_ {
    *          of x ms, the value of ttl must not be larger than
    *          std::numeric_limits<uint16_t>::max() - x.
    */
-  template <typename _Timestamp, typename _Timeout>
+  template<typename _Timestamp, typename _Timeout>
   static bool hasTimeExpired(_Timestamp start_time, _Timeout ttl) {
     _Timestamp current_time = millis_at_cycle_start_;
     _Timestamp elapsed_time = current_time - start_time;
     return (elapsed_time >= ttl);
   }
 
-  EventHandlerResult onFocusEvent(const char *command) {
-    return kaleidoscope::Hooks::onFocusEvent(command);
+  EventHandlerResult onFocusEvent(const char *input) {
+    return kaleidoscope::Hooks::onFocusEvent(input);
   }
 
   /** Handle a physical keyswitch event
@@ -211,4 +216,4 @@ class Runtime_ {
 
 extern kaleidoscope::Runtime_ Runtime;
 
-} // namespace kaleidoscope
+}  // namespace kaleidoscope

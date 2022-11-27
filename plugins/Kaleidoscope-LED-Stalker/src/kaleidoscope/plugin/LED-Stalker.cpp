@@ -15,24 +15,31 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-LED-Stalker.h>
-#include <Kaleidoscope-LEDControl.h>
-#include "kaleidoscope/keyswitch_state.h"
+#include "kaleidoscope/plugin/LED-Stalker.h"
+
+#include <Arduino.h>  // for min
+#include <stdint.h>   // for uint8_t, uint16_t, uint32_t
+
+#include "kaleidoscope/KeyAddr.h"                     // for MatrixAddr, KeyAddr, MatrixAddr<>::...
+#include "kaleidoscope/KeyEvent.h"                    // for KeyEvent
+#include "kaleidoscope/Runtime.h"                     // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"               // for cRGB, CRGB
+#include "kaleidoscope/event_handler_result.h"        // for EventHandlerResult, EventHandlerRes...
+#include "kaleidoscope/plugin/LEDControl.h"           // for LEDControl
+#include "kaleidoscope/plugin/LEDControl/LEDUtils.h"  // for hsvToRgb
 
 namespace kaleidoscope {
 namespace plugin {
 
 StalkerEffect::ColorComputer *StalkerEffect::variant;
 uint16_t StalkerEffect::step_length = 50;
-cRGB StalkerEffect::inactive_color = (cRGB) {
-  0, 0, 0
-};
+cRGB StalkerEffect::inactive_color  = (cRGB){
+  0, 0, 0};
 
 StalkerEffect::TransientLEDMode::TransientLEDMode(const StalkerEffect *parent)
   : parent_(parent),
     step_start_time_(0),
-    map_{}
-{}
+    map_{} {}
 
 EventHandlerResult StalkerEffect::onKeyEvent(KeyEvent &event) {
   if (!Runtime.has_leds)
@@ -52,7 +59,7 @@ EventHandlerResult StalkerEffect::onKeyEvent(KeyEvent &event) {
   return EventHandlerResult::OK;
 }
 
-void StalkerEffect::TransientLEDMode::update(void) {
+void StalkerEffect::TransientLEDMode::update() {
   if (!Runtime.has_leds)
     return;
 
@@ -104,10 +111,10 @@ cRGB Haunt::compute(uint8_t *step) {
 }
 
 // BlazingTrail
-BlazingTrail::BlazingTrail(void) {
+BlazingTrail::BlazingTrail() {
 }
 constexpr uint8_t hue_start = 50.0 / 360 * 0xff;
-constexpr uint8_t hue_end = 0;
+constexpr uint8_t hue_end   = 0;
 
 cRGB BlazingTrail::compute(uint8_t *step) {
   cRGB color;
@@ -120,10 +127,10 @@ cRGB BlazingTrail::compute(uint8_t *step) {
 
   // Fade value from full following a 1-x^4 curve
   uint8_t val =
-    0xff // Maximum brightness
-    - ((uint32_t) pos255 * pos255 * pos255 * pos255 // Animation position to 4th power
-       >> 24) // ...pulled down to 8-bit range (but this has a maximum of 0xfc rather than 0xff)
-    - pos255 / (0x100 / 4); // Correction to bring the end result into a full 0 to 0xff range
+    0xff                                            // Maximum brightness
+    - ((uint32_t)pos255 * pos255 * pos255 * pos255  // Animation position to 4th power
+       >> 24)                                       // ...pulled down to 8-bit range (but this has a maximum of 0xfc rather than 0xff)
+    - pos255 / (0x100 / 4);                         // Correction to bring the end result into a full 0 to 0xff range
 
   color = hsvToRgb(hue, 0xff, val);
 
@@ -137,7 +144,7 @@ cRGB BlazingTrail::compute(uint8_t *step) {
 }
 
 // Rainbow
-Rainbow::Rainbow(void) {
+Rainbow::Rainbow() {
 }
 
 cRGB Rainbow::compute(uint8_t *step) {
@@ -149,9 +156,8 @@ cRGB Rainbow::compute(uint8_t *step) {
   return hsvToRgb(255 - *step, 255, *step);
 }
 
-}
-}
-
-}
+}  // namespace stalker
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::StalkerEffect StalkerEffect;

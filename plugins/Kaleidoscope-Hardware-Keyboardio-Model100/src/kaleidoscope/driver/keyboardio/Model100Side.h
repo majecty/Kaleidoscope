@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include "wire-protocol-constants.h"
+#include <Arduino.h>  // for byte
+#include <stdint.h>   // for uint8_t, uint32_t
 
 // We allow cRGB/CRGB to be defined already when this is included.
 //
@@ -34,13 +34,14 @@ struct cRGB {
   uint8_t g;
   uint8_t r;
 };
-#define CRGB(r,g,b) (cRGB){b, g, r}
+#define CRGB(r, g, b) \
+  (cRGB) { b, g, r }
 #endif
 
-#define LED_BANKS 4
+#define LED_BANKS          4
 
-#define LEDS_PER_HAND 32
-#define LED_BYTES_PER_BANK sizeof(cRGB)  * LEDS_PER_HAND/LED_BANKS
+#define LEDS_PER_HAND      32
+#define LED_BYTES_PER_BANK sizeof(cRGB) * LEDS_PER_HAND / LED_BANKS
 
 namespace kaleidoscope {
 namespace driver {
@@ -78,9 +79,12 @@ class Model100Side {
   void setAllLEDsTo(cRGB color);
   keydata_t getKeyData();
   bool readKeys();
-  LEDData_t ledData;
-  uint8_t controllerAddress();
 
+  LEDData_t ledData;
+
+  uint8_t controllerAddress();
+  bool isDeviceAvailable();
+  void markDeviceUnavailable();
   void setBrightness(uint8_t brightness) {
     brightness_adjustment_ = 255 - brightness;
   }
@@ -93,14 +97,17 @@ class Model100Side {
   int addr;
   int ad01;
   keydata_t keyData;
-  byte nextLEDBank = 0;
+  // a value of 0 is "device seen" - anything else is how many cycles before we should
+  // check for the device
+  uint16_t unavailable_device_check_countdown_           = 0;
+  static const uint16_t UNAVAILABLE_DEVICE_COUNTDOWN_MAX = 0x00FFU;
+  byte nextLEDBank                                       = 0;
   void sendLEDBank(byte bank);
   int readRegister(uint8_t cmd);
+  uint8_t writeData(uint8_t *data, uint8_t length);
 };
-#else // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
-class Model100Side;
-#endif // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#endif  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
 
-} // namespace keyboardio
-} // namespace driver
-} // namespace kaleidoscope
+}  // namespace keyboardio
+}  // namespace driver
+}  // namespace kaleidoscope

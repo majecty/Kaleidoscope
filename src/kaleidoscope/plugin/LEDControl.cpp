@@ -14,33 +14,35 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Kaleidoscope-LEDControl.h"
-#include "Kaleidoscope-FocusSerial.h"
-#include "kaleidoscope_internal/LEDModeManager.h"
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/LiveKeys.h"
+#include "kaleidoscope/plugin/LEDControl.h"
 
-using namespace kaleidoscope::internal; // NOLINT(build/namespaces)
+#include <Arduino.h>                   // for PSTR, strncmp_P
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+
+#include "kaleidoscope/KeyAddrMap.h"               // for KeyAddrMap<>::Iterator, KeyAddrMap
+#include "kaleidoscope/KeyEvent.h"                 // for KeyEvent
+#include "kaleidoscope/KeyMap.h"                   // for KeyMap
+#include "kaleidoscope/LiveKeys.h"                 // for LiveKeys, live_keys
+#include "kaleidoscope/hooks.h"                    // for Hooks
+#include "kaleidoscope/keyswitch_state.h"          // for keyToggledOn
+#include "kaleidoscope_internal/LEDModeManager.h"  // for LEDModeManager, LEDModeFactory
+
+using namespace kaleidoscope::internal;  // NOLINT(build/namespaces)
 
 namespace kaleidoscope {
 namespace plugin {
 
 static constexpr uint8_t uninitialized_mode_id = 255;
 
-uint8_t LEDControl::mode_id_ = uninitialized_mode_id;
+uint8_t LEDControl::mode_id_       = uninitialized_mode_id;
 uint8_t LEDControl::num_led_modes_ = LEDModeManager::numLEDModes();
 LEDMode *LEDControl::cur_led_mode_ = nullptr;
-bool LEDControl::enabled_ = true;
+bool LEDControl::enabled_          = true;
 
 LEDControl::LEDControl(void) {
 }
-uint8_t LEDControl::sync_interval_ = 32;
+uint8_t LEDControl::sync_interval_   = 32;
 uint16_t LEDControl::last_sync_time_ = 0;
-
-#ifndef NDEPRECATED
-uint8_t LEDControl::syncDelay = LEDControl::sync_interval_;
-#endif
-
 
 void LEDControl::next_mode() {
   ++mode_id_;
@@ -63,8 +65,7 @@ void LEDControl::prev_mode() {
   return set_mode(mode_id_);
 }
 
-void
-LEDControl::set_mode(uint8_t mode_) {
+void LEDControl::set_mode(uint8_t mode_) {
   if (mode_ >= num_led_modes_)
     return;
 
@@ -203,12 +204,6 @@ EventHandlerResult LEDControl::afterEachCycle() {
     return EventHandlerResult::OK;
 
   if (Runtime.hasTimeExpired(last_sync_time_, sync_interval_)) {
-#ifndef NDEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    sync_interval_ = syncDelay;
-#pragma GCC diagnostic pop
-#endif
     syncLeds();
     last_sync_time_ += sync_interval_;
     update();
@@ -217,7 +212,7 @@ EventHandlerResult LEDControl::afterEachCycle() {
   return EventHandlerResult::OK;
 }
 
-EventHandlerResult FocusLEDCommand::onFocusEvent(const char *command) {
+EventHandlerResult FocusLEDCommand::onFocusEvent(const char *input) {
   enum {
     SETALL,
     MODE,
@@ -229,24 +224,28 @@ EventHandlerResult FocusLEDCommand::onFocusEvent(const char *command) {
   if (!Runtime.has_leds)
     return EventHandlerResult::OK;
 
-  if (::Focus.handleHelp(command, PSTR("led.at\n"
-                                       "led.setAll\n"
-                                       "led.mode\n"
-                                       "led.brightness\n"
-                                       "led.theme")))
-    return EventHandlerResult::OK;
+  const char *cmd_at         = PSTR("led.at");
+  const char *cmd_setAll     = PSTR("led.setAll");
+  const char *cmd_mode       = PSTR("led.mode");
+  const char *cmd_brightness = PSTR("led.brightness");
+  const char *cmd_theme      = PSTR("led.theme");
 
-  if (strncmp_P(command, PSTR("led."), 4) != 0)
-    return EventHandlerResult::OK;
-  if (strcmp_P(command + 4, PSTR("at")) == 0)
+  if (::Focus.inputMatchesHelp(input))
+    return ::Focus.printHelp(cmd_at,
+                             cmd_setAll,
+                             cmd_mode,
+                             cmd_brightness,
+                             cmd_theme);
+
+  if (::Focus.inputMatchesCommand(input, cmd_at))
     subCommand = AT;
-  else if (strcmp_P(command + 4, PSTR("setAll")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_setAll))
     subCommand = SETALL;
-  else if (strcmp_P(command + 4, PSTR("mode")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_mode))
     subCommand = MODE;
-  else if (strcmp_P(command + 4, PSTR("theme")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_theme))
     subCommand = THEME;
-  else if (strcmp_P(command + 4, PSTR("brightness")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_brightness))
     subCommand = BRIGHTNESS;
   else
     return EventHandlerResult::OK;
@@ -334,8 +333,8 @@ EventHandlerResult FocusLEDCommand::onFocusEvent(const char *command) {
   return EventHandlerResult::EVENT_CONSUMED;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::LEDControl LEDControl;
 kaleidoscope::plugin::FocusLEDCommand FocusLEDCommand;

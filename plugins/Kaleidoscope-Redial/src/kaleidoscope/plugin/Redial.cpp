@@ -15,14 +15,18 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-Redial.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include "kaleidoscope/keyswitch_state.h"
+#include "kaleidoscope/plugin/Redial.h"
+
+#include <Arduino.h>                   // for F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/key_defs.h"              // for Key, Key_0, Key_1, Key_A, Key_Z
+#include "kaleidoscope/keyswitch_state.h"       // for keyToggledOn
 
 namespace kaleidoscope {
 namespace plugin {
-
-Key Redial::last_key_;
 
 EventHandlerResult Redial::onNameQuery() {
   return ::Focus.sendName(F("Redial"));
@@ -48,7 +52,7 @@ __attribute__((weak)) bool Redial::shouldRemember(Key mapped_key) {
   return false;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::Redial Redial;

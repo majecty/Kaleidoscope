@@ -17,50 +17,93 @@
 
 #pragma once
 
-#include <Kaleidoscope-Ranges.h>
-#include "kaleidoscope/KeyEventTracker.h"
-#include "kaleidoscope/plugin.h"
+#include <Kaleidoscope-Ranges.h>  // for LEAD_FIRST
+#include <stddef.h>               // for NULL
+#include <stdint.h>               // for uint16_t, uint8_t, int8_t
+
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/KeyEventTracker.h"       // for KeyEventTracker
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"              // for Key, Key_NoKey
+#include "kaleidoscope/plugin.h"                // for Plugin
+// -----------------------------------------------------------------------------
+// Deprecation warning messages
+#include "kaleidoscope_internal/deprecations.h"  // for DEPRECATED
+
+#define _DEPRECATED_MESSAGE_LEADER_INJECT                        \
+  "The `Leader.inject()` function is deprecated. Please call\n"  \
+  "`kaleidoscope::Runtime.handleKeyEvent()` directly instead.\n" \
+  "This function will be removed after 2022-09-01."
+
+#define _DEPRECATED_MESSAGE_LEADER_TIME_OUT                        \
+  "The `Leader.time_out` variable is deprecated. Please use the\n" \
+  "`Leader.setTimeout()` function instead.\n"                      \
+  "This variable will be removed after 2022-09-01."
+// -----------------------------------------------------------------------------
 
 #define LEADER_MAX_SEQUENCE_LENGTH 4
 
-#define LEAD(n) Key(kaleidoscope::ranges::LEAD_FIRST + n)
+#define LEAD(n)                    kaleidoscope::plugin::LeaderKey(n)
 
-#define LEADER_SEQ(...) { __VA_ARGS__, Key_NoKey }
-#define LEADER_DICT(...) { __VA_ARGS__, {{Key_NoKey}, NULL} }
+#define LEADER_SEQ(...) \
+  { __VA_ARGS__, Key_NoKey }
+#define LEADER_DICT(...)               \
+  {                                    \
+    __VA_ARGS__, { {Key_NoKey}, NULL } \
+  }
 
 namespace kaleidoscope {
 namespace plugin {
 
+constexpr Key LeaderKey(uint8_t n) {
+  return Key(kaleidoscope::ranges::LEAD_FIRST + n);
+}
+
 class Leader : public kaleidoscope::Plugin {
  public:
   typedef void (*action_t)(uint8_t seq_index);
-  typedef struct {
+  struct dictionary_t {
     Key sequence[LEADER_MAX_SEQUENCE_LENGTH + 1];
     action_t action;
-  } dictionary_t;
+  };
 
-  Leader(void) {}
-  static const dictionary_t *dictionary;
+  const dictionary_t *dictionary;
 
-  static void reset(void);
+  void reset();
+
+#ifndef NDEPRECATED
+  DEPRECATED(LEADER_TIME_OUT)
   static uint16_t time_out;
 
+  DEPRECATED(LEADER_INJECT)
   void inject(Key key, uint8_t key_state);
+#endif
+
+  void setTimeout(uint16_t timeout) {
+#ifndef NDEPRECATED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    time_out = timeout;
+#pragma GCC diagnostic pop
+#endif
+    timeout_ = timeout;
+  }
 
   EventHandlerResult onNameQuery();
   EventHandlerResult onKeyswitchEvent(KeyEvent &event);
   EventHandlerResult afterEachCycle();
 
  private:
-  static Key sequence_[LEADER_MAX_SEQUENCE_LENGTH + 1];
-  static KeyEventTracker event_tracker_;
-  static uint8_t sequence_pos_;
-  static uint16_t start_time_;
+  Key sequence_[LEADER_MAX_SEQUENCE_LENGTH + 1];
+  KeyEventTracker event_tracker_;
+  uint8_t sequence_pos_;
+  uint16_t start_time_ = 0;
+  uint16_t timeout_    = 1000;
 
-  static int8_t lookup(void);
+  int8_t lookup();
 };
-}
 
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::Leader Leader;

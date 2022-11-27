@@ -19,29 +19,37 @@
 
 #if defined(ARDUINO_ARCH_GD32) || defined(KALEIDOSCOPE_VIRTUAL_BUILD)
 
+#include <FlashAsEEPROM.h>
+#include <FlashStorage.h>
+
 #include "kaleidoscope/driver/storage/Base.h"
-#include "FlashStorage.h"
-#include "FlashAsEEPROM.h"
 
 namespace kaleidoscope {
 namespace driver {
 namespace storage {
 
 struct GD32FlashProps : kaleidoscope::driver::storage::BaseProps {
-  static constexpr uint16_t length = 10240;
+  static constexpr uint16_t length = 16384;
 };
 
-template <typename _StorageProps>
-class GD32Flash: public EEPROMClass<_StorageProps::length> {
+template<typename _StorageProps>
+class GD32Flash : public EEPROMClass<_StorageProps::length> {
  public:
   void setup() {
     EEPROMClass<_StorageProps::length>::begin();
   }
-  void commit() {}
+
+  bool isSliceUninitialized(uint16_t offset, uint16_t size) {
+    for (uint16_t o = offset; o < offset + size; o++) {
+      if (this->read(o) != _StorageProps::uninitialized_byte)
+        return false;
+    }
+    return true;
+  }
 };
 
-} // namespace storage
-} // namespace driver
-} // namespace kaleidoscope
+}  // namespace storage
+}  // namespace driver
+}  // namespace kaleidoscope
 
 #endif

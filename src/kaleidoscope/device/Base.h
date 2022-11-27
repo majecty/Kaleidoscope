@@ -15,22 +15,26 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// IWYU pragma: private, include "kaleidoscope/device/device.h"
+
 /** @file kaleidoscope/device/Base.h
  * Base class for Kaleidoscope device libraries.
  */
 
 #pragma once
 
-#include "kaleidoscope/MatrixAddr.h"
-#include "kaleidoscope_internal/deprecations.h"
-#include "kaleidoscope/macro_helpers.h"
+#include <stdint.h>  // for uint8_t, int8_t, uint32_t
+#include <string.h>  // for size_t, strlen, memcpy
 
-#include "kaleidoscope/driver/hid/Base.h"
-#include "kaleidoscope/driver/keyscanner/None.h"
-#include "kaleidoscope/driver/led/None.h"
-#include "kaleidoscope/driver/mcu/None.h"
-#include "kaleidoscope/driver/bootloader/None.h"
-#include "kaleidoscope/driver/storage/None.h"
+#include "kaleidoscope/driver/bootloader/None.h"  // for None
+#include "kaleidoscope/driver/hid/Base.h"         // for Base, BaseProps
+#include "kaleidoscope/driver/keyscanner/Base.h"  // for BaseProps
+#include "kaleidoscope/driver/keyscanner/None.h"  // for None
+#include "kaleidoscope/driver/led/None.h"         // for cRGB, BaseProps, CRGB, None
+#include "kaleidoscope/driver/mcu/Base.h"         // for BaseProps
+#include "kaleidoscope/driver/mcu/None.h"         // for None
+#include "kaleidoscope/driver/storage/Base.h"     // for BaseProps
+#include "kaleidoscope/driver/storage/None.h"     // for None
 
 #ifndef CRGB
 #error cRGB and CRGB *must* be defined before including this header!
@@ -83,7 +87,7 @@ class Base {
     int peek() {
       return 0;
     }
-    long parseInt() { // NOLINT(runtime/int)
+    long parseInt() {  // NOLINT(runtime/int)
       return 0;
     }
     int available() {
@@ -114,9 +118,9 @@ class Base {
   typedef typename _DeviceProps::StorageProps StorageProps;
   typedef typename _DeviceProps::Storage Storage;
 
-  static constexpr uint8_t matrix_rows = KeyScannerProps::matrix_rows;
+  static constexpr uint8_t matrix_rows    = KeyScannerProps::matrix_rows;
   static constexpr uint8_t matrix_columns = KeyScannerProps::matrix_columns;
-  static constexpr uint8_t led_count = LEDDriverProps::led_count;
+  static constexpr uint8_t led_count      = LEDDriverProps::led_count;
   static constexpr auto LEDs() -> decltype(LEDDriver::LEDs()) & {
     return LEDDriver::LEDs();
   }
@@ -422,8 +426,8 @@ class Base {
   Storage storage_;
 };
 
-}
-}
+}  // namespace device
+}  // namespace kaleidoscope
 
 // EXPORT_DEVICE exports a device type from a specific namespace to
 // the 'kaleidoscope' namespace as type 'Device'. The corresponding
@@ -435,10 +439,10 @@ class Base {
 // e.g. Model01 as device and Model01Props as properties class.
 //
 #ifndef KALEIDOSCOPE_VIRTUAL_BUILD
-#define EXPORT_DEVICE(DEVICE)                                                  \
-  typedef DEVICE##Props DeviceProps;                                           \
+#define EXPORT_DEVICE(DEVICE)        \
+  typedef DEVICE##Props DeviceProps; \
   typedef DEVICE Device;
-#else // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
-#define EXPORT_DEVICE(DEVICE)                                                  \
+#else  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#define EXPORT_DEVICE(DEVICE) \
   typedef DEVICE##Props DeviceProps;
-#endif // ifndef KALEIDOSCOPE_VIRTUAL_BUILD
+#endif  // ifndef KALEIDOSCOPE_VIRTUAL_BUILD

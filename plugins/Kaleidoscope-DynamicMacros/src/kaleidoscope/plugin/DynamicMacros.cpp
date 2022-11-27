@@ -1,5 +1,5 @@
 /* DynamicMacros - Dynamic macro support for Kaleidoscope.
- * Copyright (C) 2019, 2021  Keyboard.io, Inc.
+ * Copyright (C) 2019-2022  Keyboard.io, Inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,50 +14,30 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Kaleidoscope-DynamicMacros.h"
-#include "Kaleidoscope-FocusSerial.h"
-#include "kaleidoscope/keyswitch_state.h"
-#include "kaleidoscope/key_events.h"
+#include "kaleidoscope/plugin/DynamicMacros.h"
+
+#include <Arduino.h>                   // for delay, PSTR, F, __FlashStri...
+#include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
+#include <Kaleidoscope-Ranges.h>       // for DYNAMIC_MACRO_FIRST, DYNAMIC_MACRO_LAST
+
+#include "kaleidoscope/KeyEvent.h"                // for KeyEvent
+#include "kaleidoscope/Runtime.h"                 // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"           // for VirtualProps::Storage, Base<>::Storage
+#include "kaleidoscope/keyswitch_state.h"         // for keyToggledOn
+#include "kaleidoscope/plugin/EEPROM-Settings.h"  // for EEPROMSettings
+// This is a special exception to the rule of only including a plugin's
+// top-level header file, because DynamicMacros doesn't depend on the Macros
+// plugin itself; it's just using the same macro step definitions.
+#include "kaleidoscope/plugin/Macros/MacroSteps.h"  // for MACRO_ACTION_END, MACRO_ACTION_STEP_E...
 
 namespace kaleidoscope {
 namespace plugin {
 
-uint16_t DynamicMacros::storage_base_;
-uint16_t DynamicMacros::storage_size_;
-uint16_t DynamicMacros::map_[];
-Key DynamicMacros::active_macro_keys_[];
-
 // =============================================================================
-// It might be possible to use Macros instead of reproducing it
-void DynamicMacros::press(Key key) {
-  Runtime.handleKeyEvent(KeyEvent(KeyAddr::none(), IS_PRESSED | INJECTED, key));
-  for (Key &mkey : active_macro_keys_) {
-    if (mkey == Key_NoKey) {
-      mkey = key;
-      break;
-    }
-  }
-}
-
-void DynamicMacros::release(Key key) {
-  for (Key &mkey : active_macro_keys_) {
-    if (mkey == key) {
-      mkey = Key_NoKey;
-    }
-  }
-  Runtime.handleKeyEvent(KeyEvent(KeyAddr::none(), WAS_PRESSED | INJECTED, key));
-}
-
-void DynamicMacros::tap(Key key) {
-  Runtime.handleKeyEvent(KeyEvent(KeyAddr::none(), IS_PRESSED | INJECTED, key));
-  Runtime.handleKeyEvent(KeyEvent(KeyAddr::none(), WAS_PRESSED | INJECTED, key));
-}
-
-void DynamicMacros::updateDynamicMacroCache() {
-  uint16_t pos = storage_base_;
+uint8_t DynamicMacros::updateDynamicMacroCache() {
+  uint16_t pos       = storage_base_;
   uint8_t current_id = 0;
-  macro_t macro = MACRO_ACTION_END;
-  bool previous_macro_ended = false;
+  macro_t macro      = MACRO_ACTION_END;
 
   map_[0] = 0;
 
@@ -67,7 +47,6 @@ void DynamicMacros::updateDynamicMacroCache() {
     case MACRO_ACTION_STEP_EXPLICIT_REPORT:
     case MACRO_ACTION_STEP_IMPLICIT_REPORT:
     case MACRO_ACTION_STEP_SEND_REPORT:
-      previous_macro_ended = false;
       break;
 
     case MACRO_ACTION_STEP_INTERVAL:
@@ -75,29 +54,25 @@ void DynamicMacros::updateDynamicMacroCache() {
     case MACRO_ACTION_STEP_KEYCODEDOWN:
     case MACRO_ACTION_STEP_KEYCODEUP:
     case MACRO_ACTION_STEP_TAPCODE:
-      previous_macro_ended = false;
       pos++;
       break;
 
     case MACRO_ACTION_STEP_KEYDOWN:
     case MACRO_ACTION_STEP_KEYUP:
     case MACRO_ACTION_STEP_TAP:
-      previous_macro_ended = false;
       pos += 2;
       break;
 
     case MACRO_ACTION_STEP_TAP_SEQUENCE: {
-      previous_macro_ended = false;
       uint8_t keyCode, flags;
       do {
-        flags = Runtime.storage().read(pos++);
+        flags   = Runtime.storage().read(pos++);
         keyCode = Runtime.storage().read(pos++);
       } while (!(flags == 0 && keyCode == 0));
       break;
     }
 
     case MACRO_ACTION_STEP_TAP_CODE_SEQUENCE: {
-      previous_macro_ended = false;
       uint8_t keyCode, flags;
       do {
         keyCode = Runtime.storage().read(pos++);
@@ -107,26 +82,34 @@ void DynamicMacros::updateDynamicMacroCache() {
 
     case MACRO_ACTION_END:
       map_[++current_id] = pos - storage_base_;
-
-      if (previous_macro_ended)
-        return;
-
-      previous_macro_ended = true;
       break;
+
+    default:
+      // When we encounter an unknown step type, stop processing. Whatever we
+      // encounter after is unknown, and there's no guarantee we can parse it
+      // properly.
+      return current_id;
     }
   }
+
+  return current_id;
 }
 
 // public
 void DynamicMacros::play(uint8_t macro_id) {
-  macro_t macro = MACRO_ACTION_END;
+  macro_t macro    = MACRO_ACTION_END;
   uint8_t interval = 0;
   uint16_t pos;
   Key key;
 
+  // If the requested ID is higher than the number of macros we found during the
+  // cache update, bail out. Our map beyond `macro_count_` is unreliable.
+  if (macro_id >= macro_count_)
+    return;
+
   pos = storage_base_ + map_[macro_id];
 
-  while (true) {
+  while (pos < storage_base_ + storage_size_) {
     switch (macro = Runtime.storage().read(pos++)) {
     case MACRO_ACTION_STEP_EXPLICIT_REPORT:
     case MACRO_ACTION_STEP_IMPLICIT_REPORT:
@@ -176,8 +159,8 @@ void DynamicMacros::play(uint8_t macro_id) {
 
     case MACRO_ACTION_STEP_TAP_SEQUENCE: {
       while (true) {
-        key.setFlags(0);
-        key.setKeyCode(pgm_read_byte(pos++));
+        key.setFlags(Runtime.storage().read(pos++));
+        key.setKeyCode(Runtime.storage().read(pos++));
         if (key == Key_NoKey)
           break;
         tap(key);
@@ -188,7 +171,7 @@ void DynamicMacros::play(uint8_t macro_id) {
     case MACRO_ACTION_STEP_TAP_CODE_SEQUENCE: {
       while (true) {
         key.setFlags(0);
-        key.setKeyCode(pgm_read_byte(pos++));
+        key.setKeyCode(Runtime.storage().read(pos++));
         if (key.getKeyCode() == 0)
           break;
         tap(key);
@@ -213,6 +196,7 @@ bool isDynamicMacrosKey(Key key) {
 
 // -----------------------------------------------------------------------------
 EventHandlerResult DynamicMacros::onKeyEvent(KeyEvent &event) {
+  // Ignore everything except DynamicMacros keys
   if (!isDynamicMacrosKey(event.key))
     return EventHandlerResult::OK;
 
@@ -220,9 +204,7 @@ EventHandlerResult DynamicMacros::onKeyEvent(KeyEvent &event) {
     uint8_t macro_id = event.key.getRaw() - ranges::DYNAMIC_MACRO_FIRST;
     play(macro_id);
   } else {
-    for (Key key : active_macro_keys_) {
-      release(key);
-    }
+    clear();
   }
 
   return EventHandlerResult::EVENT_CONSUMED;
@@ -232,14 +214,14 @@ EventHandlerResult DynamicMacros::onNameQuery() {
   return ::Focus.sendName(F("DynamicMacros"));
 }
 
-EventHandlerResult DynamicMacros::onFocusEvent(const char *command) {
-  if (::Focus.handleHelp(command, PSTR("macros.map\nmacros.trigger")))
-    return EventHandlerResult::OK;
+EventHandlerResult DynamicMacros::onFocusEvent(const char *input) {
+  const char *cmd_map     = PSTR("macros.map");
+  const char *cmd_trigger = PSTR("macros.trigger");
 
-  if (strncmp_P(command, PSTR("macros."), 7) != 0)
-    return EventHandlerResult::OK;
+  if (::Focus.inputMatchesHelp(input))
+    return ::Focus.printHelp(cmd_map, cmd_trigger);
 
-  if (strcmp_P(command + 7, PSTR("map")) == 0) {
+  if (::Focus.inputMatchesCommand(input, cmd_map)) {
     if (::Focus.isEOL()) {
       for (uint16_t i = 0; i < storage_size_; i++) {
         uint8_t b;
@@ -249,34 +231,35 @@ EventHandlerResult DynamicMacros::onFocusEvent(const char *command) {
     } else {
       uint16_t pos = 0;
 
-      while (!::Focus.isEOL()) {
+      while (!::Focus.isEOL() && pos < storage_size_) {
         uint8_t b;
         ::Focus.read(b);
 
         Runtime.storage().update(storage_base_ + pos++, b);
       }
       Runtime.storage().commit();
-      updateDynamicMacroCache();
+      macro_count_ = updateDynamicMacroCache();
     }
-  }
-
-  if (strcmp_P(command + 7, PSTR("trigger")) == 0) {
+    return EventHandlerResult::EVENT_CONSUMED;
+  } else if (::Focus.inputMatchesCommand(input, cmd_trigger)) {
     uint8_t id = 0;
     ::Focus.read(id);
     play(id);
+
+    return EventHandlerResult::EVENT_CONSUMED;
   }
 
-  return EventHandlerResult::EVENT_CONSUMED;
+  return EventHandlerResult::OK;
 }
 
 // public
 void DynamicMacros::reserve_storage(uint16_t size) {
   storage_base_ = ::EEPROMSettings.requestSlice(size);
   storage_size_ = size;
-  updateDynamicMacroCache();
+  macro_count_  = updateDynamicMacroCache();
 }
 
-} // namespace plugin
-} // namespace kaleidoscope
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::DynamicMacros DynamicMacros;

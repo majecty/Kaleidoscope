@@ -17,28 +17,30 @@
 
 #pragma once
 
-#include "kaleidoscope/Runtime.h"
-#include <Kaleidoscope-Ranges.h>
+#include <Kaleidoscope-Ranges.h>  // for REDIAL
 
-#define Key_Redial Key(kaleidoscope::ranges::REDIAL)
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/key_defs.h"              // for Key
+#include "kaleidoscope/plugin.h"                // for Plugin
+
+constexpr Key Key_Redial = Key(kaleidoscope::ranges::REDIAL);
 
 namespace kaleidoscope {
 namespace plugin {
 
 class Redial : public kaleidoscope::Plugin {
  public:
-  Redial(void) {}
-
   static bool shouldRemember(Key mappedKey);
 
   EventHandlerResult onNameQuery();
   EventHandlerResult onKeyEvent(KeyEvent &event);
 
  private:
-  static Key last_key_;
+  Key last_key_;
 };
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::Redial Redial;

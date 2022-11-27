@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*-
  * Kaleidoscope-FingerPainter -- On-the-fly keyboard painting.
- * Copyright (C) 2017-2021  Keyboard.io, Inc
+ * Copyright (C) 2017-2022  Keyboard.io, Inc
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -15,19 +15,23 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Kaleidoscope-FingerPainter.h>
+#include "kaleidoscope/plugin/FingerPainter.h"
 
-#include <Kaleidoscope-EEPROM-Settings.h>
-#include <Kaleidoscope-FocusSerial.h>
-#include <Kaleidoscope-LEDControl.h>
-#include <Kaleidoscope-LED-Palette-Theme.h>
-#include "kaleidoscope/keyswitch_state.h"
+#include <Arduino.h>                         // for PSTR, F, __FlashStringHelper
+#include <Kaleidoscope-FocusSerial.h>        // for Focus, FocusSerial
+#include <Kaleidoscope-LED-Palette-Theme.h>  // for LEDPaletteTheme
+#include <stdint.h>                          // for uint16_t, uint8_t
+#include <string.h>                          // for memcmp
+
+#include "kaleidoscope/KeyAddr.h"               // for KeyAddr
+#include "kaleidoscope/KeyEvent.h"              // for KeyEvent
+#include "kaleidoscope/Runtime.h"               // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"         // for Device, cRGB, VirtualProps::Storage, Base...
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult, EventHandlerResult::OK
+#include "kaleidoscope/keyswitch_state.h"       // for keyToggledOff
 
 namespace kaleidoscope {
 namespace plugin {
-
-uint16_t FingerPainter::color_base_;
-bool FingerPainter::edit_mode_;
 
 EventHandlerResult FingerPainter::onNameQuery() {
   return ::Focus.sendName(F("FingerPainter"));
@@ -38,7 +42,7 @@ EventHandlerResult FingerPainter::onSetup() {
   return EventHandlerResult::OK;
 }
 
-void FingerPainter::update(void) {
+void FingerPainter::update() {
   ::LEDPaletteTheme.updateHandler(color_base_, 0);
 }
 
@@ -46,7 +50,7 @@ void FingerPainter::refreshAt(KeyAddr key_addr) {
   ::LEDPaletteTheme.refreshAt(color_base_, 0, key_addr);
 }
 
-void FingerPainter::toggle(void) {
+void FingerPainter::toggle() {
   edit_mode_ = !edit_mode_;
 }
 
@@ -64,8 +68,8 @@ EventHandlerResult FingerPainter::onKeyEvent(KeyEvent &event) {
   // TODO(anyone): The following works only for keyboards with LEDs for each key.
 
   uint8_t color_index = ::LEDPaletteTheme
-                        .lookupColorIndexAtPosition(color_base_,
-                                                    Runtime.device().getLedIndex(event.addr));
+                          .lookupColorIndexAtPosition(color_base_,
+                                                      Runtime.device().getLedIndex(event.addr));
 
   // Find the next color in the palette that is different.
   // But do not loop forever!
@@ -85,25 +89,26 @@ EventHandlerResult FingerPainter::onKeyEvent(KeyEvent &event) {
   ::LEDPaletteTheme.updateColorIndexAtPosition(color_base_,
                                                Runtime.device().getLedIndex(event.addr),
                                                color_index);
+  Runtime.storage().commit();
 
   return EventHandlerResult::EVENT_CONSUMED;
 }
 
-EventHandlerResult FingerPainter::onFocusEvent(const char *command) {
+EventHandlerResult FingerPainter::onFocusEvent(const char *input) {
   enum {
     TOGGLE,
     CLEAR,
   } sub_command;
 
-  if (::Focus.handleHelp(command, PSTR("fingerpainter.toggle\nfingerpainter.clear")))
-    return EventHandlerResult::OK;
+  const char *cmd_toggle = PSTR("fingerpainter.toggle");
+  const char *cmd_clear  = PSTR("fingerpainter.clear");
 
-  if (strncmp_P(command, PSTR("fingerpainter."), 14) != 0)
-    return EventHandlerResult::OK;
+  if (::Focus.inputMatchesHelp(input))
+    return ::Focus.printHelp(cmd_toggle, cmd_clear);
 
-  if (strcmp_P(command + 14, PSTR("toggle")) == 0)
+  if (::Focus.inputMatchesCommand(input, cmd_toggle))
     sub_command = TOGGLE;
-  else if (strcmp_P(command + 14, PSTR("clear")) == 0)
+  else if (::Focus.inputMatchesCommand(input, cmd_clear))
     sub_command = CLEAR;
   else
     return EventHandlerResult::OK;
@@ -122,7 +127,7 @@ EventHandlerResult FingerPainter::onFocusEvent(const char *command) {
   return EventHandlerResult::OK;
 }
 
-}
-}
+}  // namespace plugin
+}  // namespace kaleidoscope
 
 kaleidoscope::plugin::FingerPainter FingerPainter;
