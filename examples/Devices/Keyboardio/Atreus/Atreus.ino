@@ -201,7 +201,7 @@ void updateMouseSpeed(int pressedSpeed) {
       MouseKeys.setCursorInitSpeed(30);
       MouseKeys.setCursorAccelDuration(200); // 6
       MouseKeys.setCursorBaseSpeed(127);
-      MouseKeys.setScrollInterval(50);
+      MouseKeys.setScrollInterval(10);
       //      MouseKeys.wheelSpeed(20);
       break;
     case MACRO_MOUSE_NORMAL:
@@ -328,5 +328,3 @@ void setup() {
 void loop() {
   Kaleidoscope.loop();
 }
-
-
