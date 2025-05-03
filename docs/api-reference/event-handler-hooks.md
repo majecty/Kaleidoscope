@@ -40,10 +40,14 @@ time.
 
 ### `onSetup()`
 
-This handler is called when Kaleidoscope first starts. If a plugin needs to do
-some work after its constructor is called, but before Kaleidoscope enters its
-main loop and starts scanning for keyswitch events, it can do it in this
+This handler is called when Kaleidoscope first starts, at the end
+of the `setup()` method. If a plugin needs to do some work after
+its constructor is called, but before Kaleidoscope enters its main
+loop and starts scanning for keyswitch events, it can do it in this
 function.
+
+It takes no arguments, and must return
+`kaleidoscope::EventHandlerResult::OK`.
 
 ### `beforeEachCycle()`
 
@@ -51,6 +55,8 @@ This handler gets called at the beginning of every keyswitch scan cycle, before
 the scan. It can be used by plugins to do things that need to be done
 repeatedly, regardless of any input from the user. Typically, this involves
 things like checking for timeouts.
+
+Takes no arguments, must return `kaleidoscope::EventHandlerResult::OK`.
 
 ### `afterEachCycle()`
 
@@ -193,6 +199,19 @@ press events take place.
 
 ## Other events
 
+### `onHostConnectionStatusChanged(uint8_t device_id, HostConnectionStatus status)`
+
+Called when a host device's connection status changes. The `device_id` parameter identifies which host device changed status, and the `status` parameter indicates the new connection state.
+
+The possible status values are:
+- `Disconnected`: The host is not connected
+- `Connecting`: In the process of connecting (including pairing)
+- `Connected`: Successfully connected and ready for use
+- `PairingFailed`: Failed to establish pairing with the host
+- `PairingSuccess`: Successfully paired with the host
+
+Note: The pairing states (`PairingFailed` and `PairingSuccess`) are one-time notifications that occur during the connection process. After these states, the status will transition to either `Connected` (on success) or `Disconnected` (on failure).
+
 ### `onLayerChange()`
 
 Called whenever one or more keymap layers are activated or deactivated (just
@@ -210,7 +229,12 @@ the active LED mode (e.g. LED-ActiveModColor).
 
 ### `onFocusEvent()`
 
+Used to implement [bi-directional communication](#bidirectional-communication-for-plugins). This is called whenever the firmware receives a command from the host. The only argument is the command name. Can return `kaleidoscope::EventHandlerResult::OK` to let other plugins process the event further, or `kaleidoscope::EventHandlerResult::EVENT_CONSUMED` to stop processing.
+
 ### `onNameQuery()`
+
+Used by the [Focus](#bidirecional-communication-for-plugins) plugin, when replying to a `plugins` command. Should either send the plugin name, or not be implemented at all, if the host knowing about the plugin isn't important.
+
 
 ### `exploreSketch()`
 

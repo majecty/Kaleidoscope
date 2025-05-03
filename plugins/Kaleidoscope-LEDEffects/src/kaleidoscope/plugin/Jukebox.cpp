@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-LEDEffects -- An assorted collection of LED effects for Kaleidoscope
- * Copyright (C) 2016  Keyboard.io, Inc
+/* Kaleidoscope-LEDEffects -- An assorted collection of LED effects for Kaleidoscope
+ * Copyright 2016-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -20,10 +25,12 @@
 #include "kaleidoscope/device/device.h"    // for CRGB
 #include "kaleidoscope/plugin/TriColor.h"  // for TriColor
 
-kaleidoscope::plugin::TriColor JukeboxEffect(CRGB(0xc8, 0xe8, 0xee),  /* TM */
+kaleidoscope::plugin::TriColor JukeboxEffect("Jukebox",
+                                             CRGB(0xc8, 0xe8, 0xee),  /* TM */
                                              CRGB(0xc3, 0xee, 0x8c),  /* VCO */
                                              CRGB(0x21, 0x38, 0xd7)); /* RN */
 
-kaleidoscope::plugin::TriColor JukeboxAlternateEffect(CRGB(0xc8, 0xe8, 0xee),  /* TM */
+kaleidoscope::plugin::TriColor JukeboxAlternateEffect("JukeboxAlternate",
+                                                      CRGB(0xc8, 0xe8, 0xee),  /* TM */
                                                       CRGB(0x21, 0x38, 0xd7),  /* RN */
                                                       CRGB(0xc3, 0xee, 0x8c)); /* VCO */

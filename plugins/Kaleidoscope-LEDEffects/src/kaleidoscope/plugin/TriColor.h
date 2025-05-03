@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-LEDEffects -- An assorted collection of LED effects for Kaleidoscope
- * Copyright (C) 2016, 2017  Keyboard.io, Inc
+/* Kaleidoscope-LEDEffects -- An assorted collection of LED effects for Kaleidoscope
+ * Copyright 2016-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -27,9 +32,13 @@ namespace plugin {
 class TriColor : public Plugin,
                  public LEDModeInterface {
  public:
-  TriColor(cRGB base_color, cRGB mod_color, cRGB esc_color);
+  TriColor(const char *led_mode_name, cRGB base_color, cRGB mod_color, cRGB esc_color);
+  TriColor(cRGB base_color, cRGB mod_color, cRGB esc_color)
+    : TriColor("TriColor", base_color, mod_color, esc_color) {}
+  TriColor(const char *led_mode_name, cRGB base_color, cRGB mod_color)
+    : TriColor(led_mode_name, base_color, mod_color, mod_color) {}
   TriColor(cRGB base_color, cRGB mod_color)
-    : TriColor(base_color, mod_color, mod_color) {}
+    : TriColor("TriColor", base_color, mod_color, mod_color) {}
 
   // This class' instance has dynamic lifetime
   //

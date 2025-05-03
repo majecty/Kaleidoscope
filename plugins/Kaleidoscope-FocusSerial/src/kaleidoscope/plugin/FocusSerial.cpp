@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-FocusSerial -- Bidirectional communication plugin
- * Copyright (C) 2017, 2018, 2021  Keyboard.io, Inc
+/* Kaleidoscope-FocusSerial -- Bidirectional communication plugin
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -17,7 +22,7 @@
 
 #include "kaleidoscope/plugin/FocusSerial.h"
 
-#include <Arduino.h>         // for PSTR, __FlashStringHelper, F, strcmp_P
+#include <Arduino.h>         // for PSTR, F, strcmp_P
 #include <HardwareSerial.h>  // for HardwareSerial
 #include <string.h>          // for memset
 
@@ -43,7 +48,7 @@ EventHandlerResult FocusSerial::afterEachCycle() {
 
   do {
     // If there's a newline pending, don't read it
-    if (Runtime.serialPort().peek() == NEWLINE) {
+    if (peek() == NEWLINE) {
       break;
     }
     c = Runtime.serialPort().read();
@@ -77,16 +82,25 @@ EventHandlerResult FocusSerial::afterEachCycle() {
   return EventHandlerResult::OK;
 }
 
+void sendLedModeCallback_(const char *name) {
+  Runtime.serialPort().println(name);
+}
+
 EventHandlerResult FocusSerial::onFocusEvent(const char *input) {
-  const char *cmd_help    = PSTR("help");
-  const char *cmd_reset   = PSTR("device.reset");
-  const char *cmd_plugins = PSTR("plugins");
+  const char *cmd_help      = PSTR("help");
+  const char *cmd_reset     = PSTR("device.reset");
+  const char *cmd_led_modes = PSTR("led.modes");
+  const char *cmd_plugins   = PSTR("plugins");
 
   if (inputMatchesHelp(input))
-    return printHelp(cmd_help, cmd_reset, cmd_plugins);
+    return printHelp(cmd_help, cmd_reset, cmd_led_modes, cmd_plugins);
 
   if (inputMatchesCommand(input, cmd_reset)) {
     Runtime.device().rebootBootloader();
+    return EventHandlerResult::EVENT_CONSUMED;
+  }
+  if (inputMatchesCommand(input, cmd_led_modes)) {
+    kaleidoscope::Hooks::onLedEffectQuery(sendLedModeCallback_);
     return EventHandlerResult::EVENT_CONSUMED;
   }
   if (inputMatchesCommand(input, cmd_plugins)) {
@@ -96,15 +110,6 @@ EventHandlerResult FocusSerial::onFocusEvent(const char *input) {
 
   return EventHandlerResult::OK;
 }
-
-#ifndef NDEPRECATED
-bool FocusSerial::handleHelp(const char *input, const char *help_message) {
-  if (!inputMatchesHelp(input)) return false;
-
-  printHelp(help_message);
-  return true;
-}
-#endif
 
 void FocusSerial::printBool(bool b) {
   Runtime.serialPort().print((b) ? F("true") : F("false"));
@@ -118,14 +123,16 @@ bool FocusSerial::inputMatchesCommand(const char *input, const char *expected) {
   return strcmp_P(input, expected) == 0;
 }
 
+
 bool FocusSerial::isEOL() {
   int c        = -1;
-  auto timeout = Runtime.serialPort().getTimeout();
+  auto timeout = 1000;  // Runtime.serialPort().getTimeout(); // TODO nrf core doesn't expose getTimeout
   auto start   = millis();
+
 
   // Duplicate some of Stream::timedPeek because it's protected
   do {
-    c = Runtime.serialPort().peek();
+    c = peek();
     if (c == NEWLINE) {
       return true;
     } else if (c >= 0) {

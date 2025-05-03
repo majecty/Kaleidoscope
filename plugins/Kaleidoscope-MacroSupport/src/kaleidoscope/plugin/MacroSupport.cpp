@@ -1,9 +1,15 @@
-/* Kaleidoscope-MacroSupport - Macros support functions for Kaleidoscope
- * Copyright (C) 2022  Keyboard.io, Inc.
+/* Kaleidoscope-MacroSupport -- Macro keys for Kaleidoscope
+ * Copyright 2022-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -76,6 +82,13 @@ void MacroSupport::tap(Key key) const {
   // releasing the key after pressing it. It is possible for some other plugin
   // to insert an event in between, but very unlikely.
   Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), press_state, key});
+  // Because some HID implementations coalesce reports sent within a short
+  // period of time, we need to insert a small delay between programmatic press and
+  // release events.
+  // In particular, Windows BLE HID can turn a press and release inside the same
+  // transmission interval into a no-op, causing dropped keystrokes.
+
+  delay(25);
   Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), release_state, key});
 }
 

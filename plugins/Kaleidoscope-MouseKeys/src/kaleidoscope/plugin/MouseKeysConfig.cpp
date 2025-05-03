@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-MouseKeys -- Mouse keys for Kaleidoscope.
- * Copyright (C) 2022  Keyboard.io, Inc
+/* Kaleidoscope-MouseKeys -- Mouse keys for Kaleidoscope.
+ * Copyright 2022-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -33,15 +38,13 @@ namespace plugin {
 // MouseKeys configurator
 
 EventHandlerResult MouseKeysConfig::onSetup() {
-  settings_addr_ = ::EEPROMSettings.requestSlice(sizeof(MouseKeys::Settings));
+  bool success = ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &::MouseKeys.settings_);
 
-  // If the EEPROM is empty, store the default settings.
-  if (Runtime.storage().isSliceUninitialized(settings_addr_, sizeof(MouseKeys::Settings))) {
-    Runtime.storage().put(settings_addr_, ::MouseKeys.settings_);
+  if (!success) {
+    Runtime.storage().put(settings_base_, ::MouseKeys.settings_);
     Runtime.storage().commit();
   }
 
-  Runtime.storage().get(settings_addr_, ::MouseKeys.settings_);
 
   // We need to set the grid size explicitly, because behind the scenes, that's
   // stored in MouseWrapper.
@@ -137,12 +140,13 @@ EventHandlerResult MouseKeysConfig::onFocusEvent(const char *input) {
       ::MouseKeys.setWarpGridSize(arg);
       break;
     }
+    // Update settings stored in EEPROM, and indicate that this Focus event has
+    // been handled successfully.
+    Runtime.storage().put(settings_base_, ::MouseKeys.settings_);
+    Runtime.storage().commit();
   }
 
-  // Update settings stored in EEPROM, and indicate that this Focus event has
-  // been handled successfully.
-  Runtime.storage().put(settings_addr_, ::MouseKeys.settings_);
-  Runtime.storage().commit();
+
   return EventHandlerResult::EVENT_CONSUMED;
 }
 

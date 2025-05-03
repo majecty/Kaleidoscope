@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-Hardware-Model100 -- Keyboardio Model 100 hardware support for Kaleidoscope
- * Copyright (C) 2021  Keyboard.io, Inc
+/* Kaleidoscope-Hardware-Keyboardio-Model100 -- Keyboardio Model100 hardware support for Kaleidoscope
+ * Copyright 2021-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -46,6 +51,7 @@ driver::keyboardio::Model100Side Model100Hands::rightHand(3);
 
 void Model100Hands::setup() {
   Model100KeyScanner::enableScannerPower();
+  delay(70);
   Wire.begin();
   Wire.setClock(400000);
 }
@@ -146,8 +152,7 @@ void Model100KeyScanner::disableScannerPower() {
 
 
 void Model100KeyScanner::setup() {
-  enableScannerPower();
-  delay(250);
+  Model100Hands::setup();
 }
 
 void Model100KeyScanner::readMatrix() {
@@ -227,12 +232,6 @@ uint8_t Model100KeyScanner::previousPressedKeyswitchCount() {
 }
 
 /********* Hardware plugin *********/
-
-void Model100::setup() {
-  Model100KeyScanner::setup();
-  Model100Hands::setup();
-  kaleidoscope::device::Base<Model100Props>::setup();
-}
 
 void Model100::enableHardwareTestMode() {
   // Toggle the programming LEDS on

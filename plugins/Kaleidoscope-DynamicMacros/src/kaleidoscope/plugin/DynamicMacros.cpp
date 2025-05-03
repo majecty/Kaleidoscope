@@ -1,9 +1,15 @@
-/* DynamicMacros - Dynamic macro support for Kaleidoscope.
- * Copyright (C) 2019-2022  Keyboard.io, Inc.
+/* Kaleidoscope-DynamicMacros -- Dynamic macro support for Kaleidoscope.
+ * Copyright 2019-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -41,7 +47,7 @@ uint8_t DynamicMacros::updateDynamicMacroCache() {
 
   map_[0] = 0;
 
-  while (pos < storage_base_ + storage_size_) {
+  while (pos < storage_base_ + storage_size_ && current_id < MAX_MACRO_COUNT_) {
     macro = Runtime.storage().read(pos++);
     switch (macro) {
     case MACRO_ACTION_STEP_EXPLICIT_REPORT:
@@ -68,7 +74,7 @@ uint8_t DynamicMacros::updateDynamicMacroCache() {
       do {
         flags   = Runtime.storage().read(pos++);
         keyCode = Runtime.storage().read(pos++);
-      } while (!(flags == 0 && keyCode == 0));
+      } while (!(flags == 0 && keyCode == 0) && (pos < storage_base_ + storage_size_));
       break;
     }
 
@@ -76,7 +82,7 @@ uint8_t DynamicMacros::updateDynamicMacroCache() {
       uint8_t keyCode, flags;
       do {
         keyCode = Runtime.storage().read(pos++);
-      } while (keyCode != 0);
+      } while ((pos < (storage_base_ + storage_size_)) && keyCode != 0);
       break;
     }
 
@@ -107,6 +113,36 @@ void DynamicMacros::play(uint8_t macro_id) {
   if (macro_id >= macro_count_)
     return;
 
+  auto &storage = Runtime.storage();
+  // Define a lambda function for common key operations to reduce redundancy
+  auto setKeyAndAction = [this, &key, &macro, &pos]() {
+    // Keycode variants of actions don't have flags to set, but we want to make sure
+    // we're still initializing them properly.
+
+    key.setFlags((macro == MACRO_ACTION_STEP_KEYCODEDOWN || macro == MACRO_ACTION_STEP_KEYCODEUP || macro == MACRO_ACTION_STEP_TAPCODE) ? 0
+                                                                                                                                        : Runtime.storage().read(pos++));
+
+    key.setKeyCode(Runtime.storage().read(pos++));
+
+    switch (macro) {
+    case MACRO_ACTION_STEP_KEYCODEDOWN:
+    case MACRO_ACTION_STEP_KEYDOWN:
+      this->press(key);
+      break;
+    case MACRO_ACTION_STEP_KEYCODEUP:
+    case MACRO_ACTION_STEP_KEYUP:
+      this->release(key);
+      break;
+    case MACRO_ACTION_STEP_TAP:
+    case MACRO_ACTION_STEP_TAPCODE:
+      this->tap(key);
+      break;
+    default:
+      break;
+    }
+  };
+
+
   pos = storage_base_ + map_[macro_id];
 
   while (pos < storage_base_ + storage_size_) {
@@ -126,60 +162,27 @@ void DynamicMacros::play(uint8_t macro_id) {
     }
 
     case MACRO_ACTION_STEP_KEYDOWN:
-      key.setFlags(Runtime.storage().read(pos++));
-      key.setKeyCode(Runtime.storage().read(pos++));
-      press(key);
-      break;
     case MACRO_ACTION_STEP_KEYUP:
-      key.setFlags(Runtime.storage().read(pos++));
-      key.setKeyCode(Runtime.storage().read(pos++));
-      release(key);
-      break;
     case MACRO_ACTION_STEP_TAP:
-      key.setFlags(Runtime.storage().read(pos++));
-      key.setKeyCode(Runtime.storage().read(pos++));
-      tap(key);
-      break;
-
-    case MACRO_ACTION_STEP_KEYCODEDOWN:
-      key.setFlags(0);
-      key.setKeyCode(Runtime.storage().read(pos++));
-      press(key);
-      break;
     case MACRO_ACTION_STEP_KEYCODEUP:
-      key.setFlags(0);
-      key.setKeyCode(Runtime.storage().read(pos++));
-      release(key);
-      break;
     case MACRO_ACTION_STEP_TAPCODE:
-      key.setFlags(0);
-      key.setKeyCode(Runtime.storage().read(pos++));
-      tap(key);
+    case MACRO_ACTION_STEP_KEYCODEDOWN:
+      setKeyAndAction();
       break;
 
-    case MACRO_ACTION_STEP_TAP_SEQUENCE: {
-      while (true) {
-        key.setFlags(Runtime.storage().read(pos++));
-        key.setKeyCode(Runtime.storage().read(pos++));
-        if (key == Key_NoKey)
-          break;
-        tap(key);
-        delay(interval);
-      }
-      break;
-    }
+    case MACRO_ACTION_STEP_TAP_SEQUENCE:
     case MACRO_ACTION_STEP_TAP_CODE_SEQUENCE: {
+      bool isKeycodeSequence = macro == MACRO_ACTION_STEP_TAP_CODE_SEQUENCE;
       while (true) {
-        key.setFlags(0);
-        key.setKeyCode(Runtime.storage().read(pos++));
-        if (key.getKeyCode() == 0)
+        key.setFlags(isKeycodeSequence ? 0 : storage.read(pos++));
+        key.setKeyCode(storage.read(pos++));
+        if (key == Key_NoKey || pos >= storage_base_ + storage_size_)
           break;
         tap(key);
         delay(interval);
       }
       break;
     }
-
     case MACRO_ACTION_END:
     default:
       return;

@@ -1,9 +1,15 @@
-/* Kaleidoscope-MouseKeys - Mouse keys for Kaleidoscope.
- * Copyright (C) 2017-2022  Keyboard.io, Inc.
+/* Kaleidoscope-MouseKeys -- Mouse keys for Kaleidoscope.
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -20,16 +26,16 @@
 #include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
 #include <stdint.h>                    // for uint8_t, uint16_t, int8_t
 
-#include "kaleidoscope/KeyEvent.h"                             // for KeyEvent
-#include "kaleidoscope/Runtime.h"                              // for Runtime, Runtime_
-#include "kaleidoscope/device/device.h"                        // for Base<>::HID, VirtualProps:...
-#include "kaleidoscope/driver/hid/keyboardio/AbsoluteMouse.h"  // for AbsoluteMouse
-#include "kaleidoscope/driver/hid/keyboardio/Mouse.h"          // for Mouse
-#include "kaleidoscope/event_handler_result.h"                 // for EventHandlerResult, EventH...
-#include "kaleidoscope/key_defs.h"                             // for Key, SYNTHETIC
-#include "kaleidoscope/keyswitch_state.h"                      // for keyToggledOn
-#include "kaleidoscope/plugin/mousekeys/MouseKeyDefs.h"        // for KEY_MOUSE_BUTTON, KEY_MOUS...
-#include "kaleidoscope/plugin/mousekeys/MouseWrapper.h"        // for MouseWrapper, WARP_DOWN
+#include "kaleidoscope/KeyEvent.h"                       // for KeyEvent
+#include "kaleidoscope/Runtime.h"                        // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"                  // for Base<>::HID, VirtualProps:...
+#include "kaleidoscope/driver/hid/base/AbsoluteMouse.h"  // for AbsoluteMouse
+#include "kaleidoscope/driver/hid/base/Mouse.h"          // for Mouse
+#include "kaleidoscope/event_handler_result.h"           // for EventHandlerResult, EventH...
+#include "kaleidoscope/key_defs.h"                       // for Key, SYNTHETIC
+#include "kaleidoscope/keyswitch_state.h"                // for keyToggledOn
+#include "kaleidoscope/plugin/mousekeys/MouseKeyDefs.h"  // for KEY_MOUSE_BUTTON, KEY_MOUS...
+#include "kaleidoscope/plugin/mousekeys/MouseWrapper.h"  // for MouseWrapper, WARP_DOWN
 
 namespace kaleidoscope {
 namespace plugin {

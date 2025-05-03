@@ -1,9 +1,15 @@
-/* Kaleidoscope-HardwareTestMode - A factory test mode for the Model 01.
- * Copyright (C) 2017-2019  Keyboard.io, Inc.
+/* Kaleidoscope-HardwareTestMode -- A factory test mode for keyboards with RGB LEDs
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -18,12 +24,12 @@
 
 #include <stdint.h>  // for uint8_t
 
-#include "kaleidoscope/KeyAddr.h"                         // for MatrixAddr, MatrixAddr<>::Range
-#include "kaleidoscope/Runtime.h"                         // for Runtime, Runtime_
-#include "kaleidoscope/device/device.h"                   // for Device, cRGB, CRGB, Base<>::HID
-#include "kaleidoscope/driver/hid/keyboardio/Keyboard.h"  // for Keyboard
-#include "kaleidoscope/plugin/LEDControl.h"               // for LEDControl
-#include "kaleidoscope/plugin/LEDControl/LEDUtils.h"      // for hsvToRgb
+#include "kaleidoscope/KeyAddr.h"                     // for MatrixAddr, MatrixAddr<>::Range
+#include "kaleidoscope/Runtime.h"                     // for Runtime, Runtime_
+#include "kaleidoscope/device/device.h"               // for Device, cRGB, CRGB, Base<>::HID
+#include "kaleidoscope/driver/hid/base/Keyboard.h"    // for Keyboard
+#include "kaleidoscope/plugin/LEDControl.h"           // for LEDControl
+#include "kaleidoscope/plugin/LEDControl/LEDUtils.h"  // for hsvToRgb
 
 namespace kaleidoscope {
 namespace plugin {

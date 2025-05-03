@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2022  Keyboard.io, Inc.
+/* Kaleidoscope - Firmware for computer input devices
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -40,7 +45,7 @@
 // Client code should not include specific hardware device headers directly.
 //
 // `KALEIDOSCOPE_HARDWARE_H` gets defined during the build process like this:
-// The fully-qualified board name (fqbn) is read from the `sketch.json` file (in
+// The fully-qualified board name (fqbn) is read from the `sketch.yaml` file (in
 // the same directory as the sketch's *.ino file), and that tells Arduino which
 // core to use and which definition to read from `boards.txt`, which adds
 // compiler flags that set `KALEIDOSCOPE_HARDWARE_H` to the appropriate header

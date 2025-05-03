@@ -75,23 +75,23 @@ EventHandlerResult PersistentIdleLEDs::onNameQuery() {
 }
 
 EventHandlerResult PersistentIdleLEDs::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(uint16_t));
+  uint16_t idle_time;
+
+  bool success = ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &idle_time);
 
   // If idleTime is max, assume that EEPROM is uninitialized, and store the
   // defaults.
-  uint16_t idle_time;
-  Runtime.storage().get(settings_base_, idle_time);
-  if (idle_time == 0xffff) {
+  if (idle_time == 0xffff || !success) {
     idle_time = idle_time_limit / 1000;
+    setIdleTimeoutSeconds(idle_time);
+  } else {
+    IdleLEDs::setIdleTimeoutSeconds(idle_time);
   }
-  setIdleTimeoutSeconds(idle_time);
-
   return EventHandlerResult::OK;
 }
 
 void PersistentIdleLEDs::setIdleTimeoutSeconds(uint32_t new_limit) {
   IdleLEDs::setIdleTimeoutSeconds(new_limit);
-
   uint16_t stored_limit = (uint16_t)new_limit;
   Runtime.storage().put(settings_base_, stored_limit);
   Runtime.storage().commit();

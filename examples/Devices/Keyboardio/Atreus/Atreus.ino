@@ -173,55 +173,75 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
-                          //  EscapeOneShot,
-                          EEPROMSettings,
-                          //                          EEPROMKeymap,
-                          //                          Focus,
-                          //                          FocusEEPROMCommand,
-                          //                          FocusSettingsCommand,
+  // ----------------------------------------------------------------------
+  // Chrysalis plugins
+
+  // The EEPROMSettings & EEPROMKeymap plugins make it possible to have an
+  // editable keymap in EEPROM.
+  EEPROMSettings,
+  EEPROMKeymap,
+
+  // Focus allows bi-directional communication with the host, and is the
+  // interface through which the keymap in EEPROM can be edited.
+  Focus,
+
+  // FocusSettingsCommand adds a few Focus commands, intended to aid in
+  // changing some settings of the keyboard, such as the default layer (via the
+  // `settings.defaultLayer` command)
+  FocusSettingsCommand,
+
+  // FocusEEPROMCommand adds a set of Focus commands, which are very helpful in
+  // both debugging, and in backing up one's EEPROM contents.
+  FocusEEPROMCommand,
+
+  // The FirmwareVersion plugin lets Chrysalis query the version of the firmware
+  // programmatically.
+  FirmwareVersion,
+
+  // The LayerNames plugin allows Chrysalis to display - and edit - custom layer
+  // names, to be shown instead of the default indexes.
+  LayerNames,
+
+  // ----------------------------------------------------------------------
+  // Keystroke-handling plugins
+
+  // The Qukeys plugin enables the "Secondary action" functionality in
+  // Chrysalis. Keys with secondary actions will have their primary action
+  // performed when tapped, but the secondary action when held.
   Qukeys,
-  //  SpaceCadet,
+
+  // SpaceCadet can turn your shifts into parens on tap, while keeping them as
+  // Shifts when held. SpaceCadetConfig lets Chrysalis configure some aspects of
+  // the plugin.
+  SpaceCadet,
+  SpaceCadetConfig,
+
+  // Enables the "Sticky" behavior for modifiers, and the "Layer shift when
+  // held" functionality for layer keys.
   OneShot,
+  OneShotConfig,
+  EscapeOneShot,
+  EscapeOneShotConfig,
+
+  // The macros plugin adds support for macros
   Macros,
+
+  // Enables dynamic, Chrysalis-editable macros.
   DynamicMacros,
+
+  // The MouseKeys plugin lets you add keys to your keymap which move the mouse.
   MouseKeys,
-  //  EscapeOneShotConfig,
-  FirmwareVersion
-                          //                          LayerNames,
-  //  SpaceCadetConfig,
-                          //  OneShotConfig,
-                          //  MouseKeysConfig
-                          );
+  MouseKeysConfig  //,
 
-int lastPressedMouseMacro = 0;
+  // The MagicCombo plugin lets you use key combinations to trigger custom
+  // actions - a bit like Macros, but triggered by pressing multiple keys at the
+  // same time.
+  // MagicCombo,
 
-void updateMouseSpeed(int pressedSpeed) {
-  switch (pressedSpeed) {
-    case MACRO_MOUSE_FAST:
-      MouseKeys.setCursorInitSpeed(30);
-      MouseKeys.setCursorAccelDuration(200); // 6
-      MouseKeys.setCursorBaseSpeed(127);
-      MouseKeys.setScrollInterval(10);
-      //      MouseKeys.wheelSpeed(20);
-      break;
-    case MACRO_MOUSE_NORMAL:
-      MouseKeys.setCursorInitSpeed(10);
-      MouseKeys.setCursorAccelDuration(600); // 2
-      MouseKeys.setCursorBaseSpeed(40);
-      MouseKeys.setScrollInterval(50);
-      //      MouseKeys.wheelSpeed = 1;
-      break;
-    case MACRO_MOUSE_SLOW:
-      MouseKeys.setCursorInitSpeed(1);
-      MouseKeys.setCursorAccelDuration(800); // 4
-      MouseKeys.setCursorBaseSpeed(20);
-      MouseKeys.setScrollInterval(200);
-      //      MouseKeys.wheelSpeed = 1;
-      break;
-    default:
-      break;
-  }
-}
+  // Enables the GeminiPR Stenography protocol. Unused by default, but with the
+  // plugin enabled, it becomes configurable - and then usable - via Chrysalis.
+  // GeminiPR,
+);
 
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   if (keyToggledOn(event.state)) {

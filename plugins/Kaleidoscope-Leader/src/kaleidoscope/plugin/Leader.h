@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-Leader -- VIM-style leader keys
- * Copyright (C) 2016, 2017, 2018, 2021  Keyboard.io, Inc
+/* Kaleidoscope-Leader -- VIM-style leader keys
+ * Copyright 2016-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -47,9 +52,11 @@
 
 #define LEADER_SEQ(...) \
   { __VA_ARGS__, Key_NoKey }
-#define LEADER_DICT(...)               \
-  {                                    \
-    __VA_ARGS__, { {Key_NoKey}, NULL } \
+#define LEADER_DICT(...) \
+  {                      \
+    __VA_ARGS__, {       \
+      {Key_NoKey}, NULL  \
+    }                    \
   }
 
 namespace kaleidoscope {

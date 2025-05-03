@@ -1,11 +1,16 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-SpaceCadet -- Space Cadet Shift Extended
- * Copyright (C) 2016, 2017, 2018  Keyboard.io, Inc, Ben Gemperline
- * Copyright (C) 2019-2021  Keyboard.io, Inc.
+/* Kaleidoscope-SpaceCadet -- Space Cadet Shift
+
+ * Copyright 2016-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -31,20 +36,19 @@ namespace kaleidoscope {
 namespace plugin {
 
 EventHandlerResult SpaceCadetConfig::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(SpaceCadet::settings_));
-
-  // If our slice is uninitialized, then return early.
-  if (Runtime.storage().isSliceUninitialized(settings_base_, sizeof(SpaceCadet::settings_)))
-    return EventHandlerResult::OK;
-
-  Runtime.storage().get(settings_base_, ::SpaceCadet.settings_);
+  bool success = ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &::SpaceCadet.settings_);
+  if (!success || (::SpaceCadet.settings_.mode != SpaceCadet::Mode::ON && ::SpaceCadet.settings_.mode != SpaceCadet::Mode::NO_DELAY)) {
+    ::SpaceCadet.disable();
+  }
 
   return EventHandlerResult::OK;
 }
 
 void SpaceCadetConfig::disableSpaceCadetIfUnconfigured() {
-  if (Runtime.storage().isSliceUninitialized(settings_base_, sizeof(SpaceCadet::settings_)))
+  if (Runtime.storage().isSliceUninitialized(settings_base_, sizeof(SpaceCadet::settings_)) ||
+      (::SpaceCadet.settings_.mode != SpaceCadet::Mode::ON && ::SpaceCadet.settings_.mode != SpaceCadet::Mode::NO_DELAY)) {
     ::SpaceCadet.disable();
+  }
 }
 
 EventHandlerResult SpaceCadetConfig::onFocusEvent(const char *input) {
