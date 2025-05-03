@@ -56,6 +56,7 @@
 #define Key_RightCurl LSHIFT(Key_RightBracket)
 #define Key_LessThan  LSHIFT(Key_Comma)
 #define Key_GreaterThan LSHIFT(Key_Period)
+#define Key_Question LSHIFT(Key_Slash)
 
 enum {
   MACRO_QWERTY,
@@ -83,24 +84,24 @@ KEYMAPS(
        Key_Q   ,Key_W   ,Key_E       ,Key_R         ,Key_T
       ,Key_A   ,Key_S   ,Key_D       ,Key_F         ,Key_G
       ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Delete
-      ,Key_Lang1,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
+      ,Key_Lang1,Key_Tab,LSHIFT(Key_Tab),Key_Tab       ,Key_Space     ,Key_Backspace
 
                      ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
-       ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
+       ,Key_F13      ,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
        ,Key_Lang1    ,Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_F14
   ),
 
   [SYMBOL] = KEYMAP_STACKED
   (
-       Key_Exclamation ,Key_At           ,Key_Underscore   ,Key_Tab     ,LSHIFT(Key_Tab)
-      ,Key_Hash        ,Key_Dollar       ,Key_Minus        ,Key_Esc     ,LSHIFT(Key_Esc)
-      ,Key_Percent     ,Key_Caret        ,Key_Tilde        ,Key_Colon   ,___                ,___
-      ,___             ,___              ,___              ,___         ,___                ,___
+       Key_Exclamation ,Key_At      ,Key_LeftCurl   ,Key_RightCurl   ,Key_And
+      ,Key_Hash        ,Key_Dollar  ,Key_LeftParen  ,Key_RightParen  ,Key_Minus
+      ,Key_Percent     ,Key_Caret   ,Key_LeftBracket,Key_RightBracket,Key_Equals  ,___
+      ,___             ,___         ,___          ,___           ,___                ,___
 
-                   ,M(MACRO_DBL_BQ),Key_Tilde ,Key_DBLQuote    ,Key_Pipe  ,Key_Backslash
-                   ,Key_Plus       ,Key_Minus ,Key_Slash       ,Key_Star  ,Key_Quote
-      ,___         ,Key_And        ,Key_Equals,Key_Comma       ,Key_Period,Key_Semicolon
+                   ,Key_Star       ,Key_Backtick ,Key_Tilde     ,Key_Semicolon  ,Key_DBLQuote
+                   ,Key_Underscore ,Key_Backslash,Key_Pipe      ,Key_Colon  ,Key_Quote
+      ,___         ,Key_Plus       ,Key_LessThan ,Key_GreaterThan       ,Key_Slash,Key_Question
       ,___         ,___            ,___       ,___             ,___       ,___
    ),
 
@@ -113,7 +114,7 @@ KEYMAPS(
 
                 ,Key_6         ,Key_7               ,Key_8           ,Key_9          ,Key_0
                 ,Key_LeftArrow ,Key_DownArrow       ,Key_UpArrow     ,Key_RightArrow ,Key_LeftShift
-      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_Quote
+      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_F15
       ,___      ,___           ,___                 ,___             ,___            ,___
    ),
 
@@ -243,6 +244,36 @@ KALEIDOSCOPE_INIT_PLUGINS(
   // GeminiPR,
 );
 
+int lastPressedMouseMacro = 0;
+
+void updateMouseSpeed(int pressedSpeed) {
+  switch (pressedSpeed) {
+    case MACRO_MOUSE_FAST:
+      MouseKeys.setCursorInitSpeed(30);
+      MouseKeys.setCursorAccelDuration(200); // 6
+      MouseKeys.setCursorBaseSpeed(127);
+      MouseKeys.setScrollInterval(10);
+      //      MouseKeys.wheelSpeed(20);
+      break;
+    case MACRO_MOUSE_NORMAL:
+      MouseKeys.setCursorInitSpeed(10);
+      MouseKeys.setCursorAccelDuration(600); // 2
+      MouseKeys.setCursorBaseSpeed(40);
+      MouseKeys.setScrollInterval(50);
+      //      MouseKeys.wheelSpeed = 1;
+      break;
+    case MACRO_MOUSE_SLOW:
+      MouseKeys.setCursorInitSpeed(1);
+      MouseKeys.setCursorAccelDuration(800); // 4
+      MouseKeys.setCursorBaseSpeed(20);
+      MouseKeys.setScrollInterval(200);
+      //      MouseKeys.wheelSpeed = 1;
+      break;
+    default:
+      break;
+  }
+}
+
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   if (keyToggledOn(event.state)) {
     switch (macro_id) {
@@ -326,8 +357,7 @@ void setup() {
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftGui),    // thumb outer
-
-      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // between
+      // kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // between
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(SYMBOL)),    // thumb fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(NUMBER)),    // thumb fun
@@ -338,7 +368,7 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 3), ShiftToLayer(PAREN)),    // index fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
 
-      kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
+      // kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
   )
 
   updateMouseSpeed(MACRO_MOUSE_NORMAL);
