@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2022  Keyboard.io, Inc.
+/* Kaleidoscope-LEDBrightnessConfig -- LED Brightness configuration, with EEPROM persistence
+ * Copyright 2022-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -17,7 +22,7 @@
 
 #include "kaleidoscope/plugin/LEDBrightnessConfig.h"
 
-#include <Arduino.h>                       // for PSTR, strcmp_P, F, __FlashStringHelper
+#include <Arduino.h>                       // for PSTR, strcmp_P, F
 #include <Kaleidoscope-EEPROM-Settings.h>  // for EEPROMSettings
 #include <Kaleidoscope-FocusSerial.h>      // for Focus, FocusSerial
 #include <stdint.h>                        // for uint8_t, uint16_t
@@ -34,13 +39,9 @@ uint16_t LEDBrightnessConfig::settings_base_;
 struct LEDBrightnessConfig::settings LEDBrightnessConfig::settings_;
 
 EventHandlerResult LEDBrightnessConfig::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(settings_));
-
-  Runtime.storage().get(settings_base_, settings_);
-
-  // We do not need to treat uninitialized slices in any special way, because
-  // uninitialized defaults to `255`, which happens to be our desired default
-  // brightness, too.
+  if (!::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &settings_)) {
+    settings_.brightness = 255;
+  }
   ::LEDControl.setBrightness(settings_.brightness);
 
   return EventHandlerResult::OK;
@@ -49,11 +50,10 @@ EventHandlerResult LEDBrightnessConfig::onSetup() {
 EventHandlerResult LEDBrightnessConfig::onFocusEvent(const char *command) {
   const char *cmd = PSTR("led.brightness");
 
-  if (::Focus.handleHelp(command, cmd))
-    return EventHandlerResult::OK;
+  if (::Focus.inputMatchesHelp(command))
+    return ::Focus.printHelp(cmd);
 
-  if (strcmp_P(command, cmd) != 0)
-    return EventHandlerResult::OK;
+  if (strcmp_P(command, cmd) != 0) return EventHandlerResult::OK;
 
   if (::Focus.isEOL()) {
     ::Focus.send(settings_.brightness);

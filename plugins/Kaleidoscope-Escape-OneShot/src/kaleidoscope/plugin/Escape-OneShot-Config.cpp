@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-Escape-OneShot -- Turn ESC into a key that cancels OneShots, if active.
- * Copyright (C) 2016-2021  Keyboard.io, Inc
+/* Kaleidoscope-Escape-OneShot -- Turn ESC into a key that cancels OneShots, if active.
+ * Copyright 2016-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -30,17 +35,13 @@ namespace kaleidoscope {
 namespace plugin {
 
 EventHandlerResult EscapeOneShotConfig::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(EscapeOneShot::settings_));
+  bool success = ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &::EscapeOneShot.settings_);
+  // if (!success) {
+  // If our slice is uninitialized, set sensible defaults.
+  // Runtime.storage().put(settings_base_, ::EscapeOneShot.settings_);
+  //Runtime.storage().commit();
+  //}
 
-  if (Runtime.storage().isSliceUninitialized(
-        settings_base_,
-        sizeof(EscapeOneShot::Settings))) {
-    // If our slice is uninitialized, set sensible defaults.
-    Runtime.storage().put(settings_base_, ::EscapeOneShot.settings_);
-    Runtime.storage().commit();
-  }
-
-  Runtime.storage().get(settings_base_, ::EscapeOneShot.settings_);
   return EventHandlerResult::OK;
 }
 
@@ -62,10 +63,10 @@ EventHandlerResult EscapeOneShotConfig::onFocusEvent(const char *input) {
     Key k;
     ::Focus.read(k);
     ::EscapeOneShot.setCancelKey(k);
+    Runtime.storage().put(settings_base_, ::EscapeOneShot.settings_);
+    Runtime.storage().commit();
   }
 
-  Runtime.storage().put(settings_base_, ::EscapeOneShot.settings_);
-  Runtime.storage().commit();
   return EventHandlerResult::EVENT_CONSUMED;
 }
 

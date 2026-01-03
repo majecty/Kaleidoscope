@@ -1,9 +1,15 @@
-/*
- * Copyright (C) 2017-2018  Keyboard.io, Inc.
+/* Kaleidoscope - Firmware for computer input devices
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -16,12 +22,31 @@
 
 #pragma once
 
+#include <Arduino.h>  // for PROGMEM
+
+#include "kaleidoscope/event_handler_result.h"  // for EventHandlerResult
+#include "kaleidoscope/event_handlers.h"        // for LedModeCallback
+
 namespace kaleidoscope {
 namespace plugin {
 
 class LEDModeInterface {
  public:
+  LEDModeInterface()
+    : led_mode_name_{0} {}
+  explicit LEDModeInterface(const char *led_mode_name)
+    : led_mode_name_{led_mode_name} {}
   void activate();
+
+  EventHandlerResult onLedEffectQuery(LedModeCallback callback) {
+    if (led_mode_name_ == 0) {
+      // If no name was defined, return a default string
+      callback("[unnamed led mode]");
+    } else {
+      callback(led_mode_name_);
+    }
+    return EventHandlerResult::OK;
+  }
 
   // This auxiliary class helps to generate a verbose error message
   // in case that there is no TransientLEDMode typedef or nested
@@ -35,6 +60,9 @@ class LEDModeInterface {
   // lifetime is handled dynamically.
   //
   typedef NoLEDMode DynamicLEDMode;
+
+ protected:
+  const char *led_mode_name_ PROGMEM;
 };
 
 }  // namespace plugin

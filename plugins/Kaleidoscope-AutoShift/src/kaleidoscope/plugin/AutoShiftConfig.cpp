@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-AutoShift -- Automatic shift on long press
- * Copyright (C) 2021  Keyboard.io, Inc
+/* Kaleidoscope-AutoShift -- Automatic shift on long press
+ * Copyright 2021-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -33,18 +38,13 @@ namespace plugin {
 // AutoShift configurator
 
 EventHandlerResult AutoShiftConfig::onSetup() {
-  settings_base_ = ::EEPROMSettings.requestSlice(sizeof(AutoShift::Settings));
-
-  if (Runtime.storage().isSliceUninitialized(
-        settings_base_,
-        sizeof(AutoShift::Settings))) {
-    // If our slice is uninitialized, set sensible defaults.
-    Runtime.storage().put(settings_base_, ::AutoShift.settings_);
-    Runtime.storage().commit();
-  }
-
-  Runtime.storage().get(settings_base_, ::AutoShift.settings_);
+  ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &::AutoShift.settings_);
   return EventHandlerResult::OK;
+}
+
+void AutoShiftConfig::disableAutoShiftIfUnconfigured() {
+  if (Runtime.storage().isSliceUninitialized(settings_base_, sizeof(AutoShift::settings_)))
+    ::AutoShift.disable();
 }
 
 EventHandlerResult AutoShiftConfig::onFocusEvent(const char *input) {

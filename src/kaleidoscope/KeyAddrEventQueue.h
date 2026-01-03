@@ -1,10 +1,15 @@
-// -*- mode: c++ -*-
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2020  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -154,9 +159,20 @@ class KeyAddrEventQueue {
     return KeyEvent{addr(i), state, Key_Undefined, id(i)};
   }
 
-  // Only call this after `EventTracker::shouldIgnore()` returns `true`.
+  // Only call this after `KeyEventTracker::shouldIgnore()` returns `true`.
   bool shouldAbort(const KeyEvent &event) const {
-    return (length_ != 0) && (event.id() - event_ids_[0] >= 0);
+    // If the queue is empty, don't abort.
+    if (length_ == 0)
+      return false;
+    // The compiler doesn't let us preserve the type of our integers here, so we
+    // need to convert the difference back to int8_t to avoid a bug when it
+    // overflows and the new event id is negative, but the old id is positive.
+    KeyEventId offset = event.id() - event_ids_[0];
+    // If the offset is negative, the event being processed is older than the
+    // first event in the queue.  This shouldn't happen because the caller
+    // should first check `KeyEventTracker::shouldIgnore()`, and only call this
+    // function if that function returns `false`.
+    return offset >= 0;
   }
 };
 

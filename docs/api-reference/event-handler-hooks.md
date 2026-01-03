@@ -1,12 +1,18 @@
-# Kaleidoscope's Plugin Event Handlers
+# Kaleidoscope's Event Handlers
 
-Kaleidoscope provides a set of hook functions that plugins can define in order
-to do their work. If one or more of the functions listed here are defined as
-methods in a plugin class, that plugin can act on the input events that drive
-Kaleidoscope.
+Kaleidoscope provides a set of hook functions that can be defined by plugins and device drivers to do their work. If one or more of the functions listed here are defined as methods in a plugin or device driver class, that component can act on the input events that drive Kaleidoscope.
 
-In response to input events (plus a few other places), Kaleidoscope calls the
-event handlers for each plugin that defines them, in sequence.
+In response to input events (plus a few other places), Kaleidoscope first calls the event handler for the active device driver (if implemented), and then calls the event handlers for each plugin that defines them, in sequence.
+
+## Device Driver Event Handlers vs. Plugin Event Handlers
+
+Kaleidoscope's event handling system recognizes two types of event handlers:
+
+1. **Device Driver Event Handlers**: These are implemented by hardware device drivers and are called first for each event. If a device driver's handler returns a result other than `EventHandlerResult::OK`, the event is considered handled and will not be passed to any plugins.
+
+2. **Plugin Event Handlers**: These are implemented by plugins and are called in sequence (in the order plugins are registered) after the device driver handler returns `EventHandlerResult::OK`.
+
+This priority system allows device drivers to intercept and handle hardware-specific features (such as Bluetooth connectivity controls) before plugins get a chance to process events.
 
 ## Return values
 
@@ -40,10 +46,14 @@ time.
 
 ### `onSetup()`
 
-This handler is called when Kaleidoscope first starts. If a plugin needs to do
-some work after its constructor is called, but before Kaleidoscope enters its
-main loop and starts scanning for keyswitch events, it can do it in this
+This handler is called when Kaleidoscope first starts, at the end
+of the `setup()` method. If a plugin needs to do some work after
+its constructor is called, but before Kaleidoscope enters its main
+loop and starts scanning for keyswitch events, it can do it in this
 function.
+
+It takes no arguments, and must return
+`kaleidoscope::EventHandlerResult::OK`.
 
 ### `beforeEachCycle()`
 
@@ -51,6 +61,8 @@ This handler gets called at the beginning of every keyswitch scan cycle, before
 the scan. It can be used by plugins to do things that need to be done
 repeatedly, regardless of any input from the user. Typically, this involves
 things like checking for timeouts.
+
+Takes no arguments, must return `kaleidoscope::EventHandlerResult::OK`.
 
 ### `afterEachCycle()`
 
@@ -118,13 +130,18 @@ class `KeyEventTracker` can help simplify following these rules.
 
 After a physical keyswitch event is processed by all of the plugins with
 `onKeyswitchEvent()` handlers (and they all return `OK`), Kaleidoscope passes
-that event on to the `Runtime.handleKeyEvent()` function, which calls plugins'
-`onKeyEvent()` handlers. This is also the starting point for events which do not
-correspond to physical key events, and can have an invalid `event.addr` value.
+that event on to the `Runtime.handleKeyEvent()` function, which first calls the
+device driver's `onKeyEvent()` handler (if implemented). If the device driver returns
+`EventHandlerResult::OK`, Kaleidoscope then calls each plugin's `onKeyEvent()` handler
+in sequence.
 
-Plugins that need to respond to keyboard input, but which do not need to be
-closely tied to physical key events (and only those events) should use
-`onKeyEvent()` to do their work.
+This is also the starting point for events which do not correspond to physical
+key events, and can have an invalid `event.addr` value.
+
+Device drivers can use this handler to intercept and handle special key codes (such as
+Bluetooth control keys) before plugins get a chance to process them. Plugins that need
+to respond to keyboard input, but which do not need to be closely tied to physical key
+events (and only those events) should use `onKeyEvent()` to do their work.
 
 After all `onKeyEvent()` handlers have returned `OK` for an event, the
 `live_keys` state array gets updated. For a key press event, the final
@@ -193,6 +210,19 @@ press events take place.
 
 ## Other events
 
+### `onHostConnectionStatusChanged(uint8_t device_id, HostConnectionStatus status)`
+
+Called when a host device's connection status changes. The `device_id` parameter identifies which host device changed status, and the `status` parameter indicates the new connection state.
+
+The possible status values are:
+- `Disconnected`: The host is not connected
+- `Connecting`: In the process of connecting (including pairing)
+- `Connected`: Successfully connected and ready for use
+- `PairingFailed`: Failed to establish pairing with the host
+- `PairingSuccess`: Successfully paired with the host
+
+Note: The pairing states (`PairingFailed` and `PairingSuccess`) are one-time notifications that occur during the connection process. After these states, the status will transition to either `Connected` (on success) or `Disconnected` (on failure).
+
 ### `onLayerChange()`
 
 Called whenever one or more keymap layers are activated or deactivated (just
@@ -210,7 +240,12 @@ the active LED mode (e.g. LED-ActiveModColor).
 
 ### `onFocusEvent()`
 
+Used to implement [bi-directional communication](#bidirectional-communication-for-plugins). This is called whenever the firmware receives a command from the host. The only argument is the command name. Can return `kaleidoscope::EventHandlerResult::OK` to let other plugins process the event further, or `kaleidoscope::EventHandlerResult::EVENT_CONSUMED` to stop processing.
+
 ### `onNameQuery()`
+
+Used by the [Focus](#bidirecional-communication-for-plugins) plugin, when replying to a `plugins` command. Should either send the plugin name, or not be implemented at all, if the host knowing about the plugin isn't important.
+
 
 ### `exploreSketch()`
 

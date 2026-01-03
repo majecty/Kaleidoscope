@@ -75,7 +75,7 @@ endif
 export ARDUINO_CLI ?= $(arduino_env) $(ARDUINO_CLI_PATH)
 
 ifneq ($(VERBOSE),) 
-$(info Using ardino-cli from $(ARDUINO_CLI_PATH))
+$(info Using arduino-cli from $(ARDUINO_CLI_PATH))
 endif
 
 ifneq ($(FQBN),)
@@ -100,7 +100,7 @@ endif
 # emoji, since it accurately represents our feelings on this 
 # state of affairs. Later, when finding props, we need to reverse 
 # this process, turning fire into space.
-_arduino_props := $(shell ${ARDUINO_CLI}  compile $(fqbn_arg) --show-properties "$(_arduino_props_sketch_arg)"|perl -p -e"s/ /🔥/g")
+_arduino_props := $(shell ${ARDUINO_CLI}  compile $(fqbn_arg) --show-properties=expanded "$(_arduino_props_sketch_arg)"|perl -p -e"s/ /🔥/g")
 
 _arduino_prop = $(subst $1=,,$(subst 🔥, ,$(filter $1=%,$(_arduino_props))))
 
@@ -111,7 +111,7 @@ ifneq ($(KALEIDOSCOPE_CCACHE),)
 ccache_wrapper_property := --build-property compiler.wrapper.cmd=ccache
 endif
 
-.PHONY: configure-arduino-cli install-arduino-core-kaleidoscope install-arduino-core-avr
+.PHONY: configure-arduino-cli install-arduino-core-kaleidoscope install-arduino-core-avr install-arduino-core-nrf52
 .PHONY: stupid-workaround-for-make-inclusion-semantics
 
 stupid-workaround-for-make-inclusion-semantics:
@@ -132,8 +132,6 @@ $(ARDUINO_DIRECTORIES_DATA)/arduino-cli.yaml:
 arduino-update-cores:
 	$(QUIET) $(ARDUINO_CLI) core update-index
 
-
-
 install-arduino-core-kaleidoscope: arduino-update-cores
 	$(QUIET) $(ARDUINO_CLI) core install "keyboardio:avr-tools-only"
 	$(QUIET) $(ARDUINO_CLI) core install "keyboardio:gd32-tools-only"
@@ -142,9 +140,29 @@ install-arduino-core-avr: arduino-update-cores
 	$(QUIET) $(ARDUINO_CLI) core install "arduino:avr"
 
 
+install-arduino-core-nrf52: arduino-update-cores
+	$(QUIET) ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS=https://raw.githubusercontent.com/keyboardio/arduino-kaleidoscope-master/refs/heads/main/package_kaleidoscope_master_index.json \
+	$(ARDUINO_CLI) core update-index
+	$(QUIET) ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS=https://raw.githubusercontent.com/keyboardio/arduino-kaleidoscope-master/refs/heads/main/package_kaleidoscope_master_index.json \
+	$(ARDUINO_CLI) core install "keyboardio:nrf52"
+
 install-arduino-core-deps:
 	$(QUIET) $(ARDUINO_CLI) core install "keyboardio:avr-tools-only"
 	$(QUIET) $(ARDUINO_CLI) core install "keyboardio:gd32-tools-only"
+
+
+# On arm64 macs, we need rosetta to function
+.PHONY: check-rosetta
+check-rosetta:
+	$(QUIET) if [ "$$(uname)" = "Darwin" ]; then \
+		if [ "$$(uname -m)" = "arm64" ]; then \
+			if ! pgrep oahd >/dev/null 2>&1; then \
+				echo "Rosetta 2 is required but not installed. Please install Rosetta 2 and try again."; \
+				exit 1; \
+			fi; \
+		fi; \
+	fi
+
 
 
 # If we're not calling setup, we should freak out if the hardware

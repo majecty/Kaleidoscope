@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2018  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -20,6 +26,7 @@
 #include "kaleidoscope/macro_helpers.h"         // for __NL__, MAKE_TEMPLATE_SIGNATURE, UNWRAP
 
 namespace kaleidoscope {
+
 
 // The following weak symbols are overwritten by using the
 // KALEIDOSCOPE_INIT_PLUGINS(...) macro in the firmware sketch. Their only
@@ -45,8 +52,6 @@ namespace kaleidoscope {
 
 _FOR_EACH_EVENT_HANDLER(INSTANTIATE_WEAK_HOOK_FUNCTION)
 // clang-format on
-
-#undef INSTANTIATE_WEAK_HOOK_FUNCTION
 
 namespace sketch_exploration {
 class Sketch;

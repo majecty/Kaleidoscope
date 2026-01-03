@@ -1,9 +1,15 @@
-/* Kaleidoscope-LEDControl - LED control plugin for Kaleidoscope
- * Copyright (C) 2017-2020  Keyboard.io, Inc.
+/* Kaleidoscope - Firmware for computer input devices
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -106,17 +112,34 @@ void LEDControl::set_all_leds_to(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void LEDControl::set_all_leds_to(cRGB color) {
+  if (!Runtime.has_leds)
+    return;
+
+  bool will_be_on = (color.r != 0 || color.g != 0 || color.b != 0);
+  bool was_off    = !Runtime.device().ledDriver().areAnyLEDsOn();
+
   for (auto led_index : Runtime.device().LEDs().all()) {
-    setCrgbAt(led_index.offset(), color);
+    Runtime.device().ledDriver().setCrgbAt(led_index.offset(), color);
   }
+
+  Runtime.device().ledDriver().updateAllLEDState(will_be_on, was_off);
 }
 
 void LEDControl::setCrgbAt(uint8_t led_index, cRGB crgb) {
-  Runtime.device().setCrgbAt(led_index, crgb);
+  if (!Runtime.has_leds)
+    return;
+
+  // Check LED state change
+  cRGB current    = Runtime.device().ledDriver().getCrgbAt(led_index);
+  bool was_off    = (current.r == 0 && current.g == 0 && current.b == 0);
+  bool will_be_on = (crgb.r != 0 || crgb.g != 0 || crgb.b != 0);
+
+  Runtime.device().ledDriver().setCrgbAt(led_index, crgb);
+  Runtime.device().ledDriver().updateLEDState(will_be_on, was_off);
 }
 
 void LEDControl::setCrgbAt(KeyAddr key_addr, cRGB color) {
-  Runtime.device().setCrgbAt(key_addr, color);
+  setCrgbAt(Runtime.device().getLedIndex(key_addr), color);
 }
 
 cRGB LEDControl::getCrgbAt(uint8_t led_index) {
@@ -212,129 +235,8 @@ EventHandlerResult LEDControl::afterEachCycle() {
   return EventHandlerResult::OK;
 }
 
-EventHandlerResult FocusLEDCommand::onFocusEvent(const char *input) {
-  enum {
-    SETALL,
-    MODE,
-    AT,
-    THEME,
-    BRIGHTNESS,
-  } subCommand;
-
-  if (!Runtime.has_leds)
-    return EventHandlerResult::OK;
-
-  const char *cmd_at         = PSTR("led.at");
-  const char *cmd_setAll     = PSTR("led.setAll");
-  const char *cmd_mode       = PSTR("led.mode");
-  const char *cmd_brightness = PSTR("led.brightness");
-  const char *cmd_theme      = PSTR("led.theme");
-
-  if (::Focus.inputMatchesHelp(input))
-    return ::Focus.printHelp(cmd_at,
-                             cmd_setAll,
-                             cmd_mode,
-                             cmd_brightness,
-                             cmd_theme);
-
-  if (::Focus.inputMatchesCommand(input, cmd_at))
-    subCommand = AT;
-  else if (::Focus.inputMatchesCommand(input, cmd_setAll))
-    subCommand = SETALL;
-  else if (::Focus.inputMatchesCommand(input, cmd_mode))
-    subCommand = MODE;
-  else if (::Focus.inputMatchesCommand(input, cmd_theme))
-    subCommand = THEME;
-  else if (::Focus.inputMatchesCommand(input, cmd_brightness))
-    subCommand = BRIGHTNESS;
-  else
-    return EventHandlerResult::OK;
-
-  switch (subCommand) {
-  case AT: {
-    uint8_t idx;
-
-    ::Focus.read(idx);
-
-    if (::Focus.isEOL()) {
-      cRGB c = ::LEDControl.getCrgbAt(idx);
-
-      ::Focus.send(c);
-    } else {
-      cRGB c;
-
-      ::Focus.read(c);
-
-      ::LEDControl.setCrgbAt(idx, c);
-    }
-    break;
-  }
-  case BRIGHTNESS: {
-    if (::Focus.isEOL()) {
-      ::Focus.send(::LEDControl.getBrightness());
-    } else {
-      uint8_t brightness;
-
-      ::Focus.read(brightness);
-      ::LEDControl.setBrightness(brightness);
-    }
-    break;
-  }
-  case SETALL: {
-    cRGB c;
-
-    ::Focus.read(c);
-
-    ::LEDControl.set_all_leds_to(c);
-
-    break;
-  }
-  case MODE: {
-    char peek = ::Focus.peek();
-    if (peek == '\n') {
-      ::Focus.send(::LEDControl.get_mode_index());
-    } else if (peek == 'n') {
-      ::LEDControl.next_mode();
-    } else if (peek == 'p') {
-      ::LEDControl.prev_mode();
-    } else {
-      uint8_t mode_id_;
-
-      ::Focus.read(mode_id_);
-      ::LEDControl.set_mode(mode_id_);
-    }
-    break;
-  }
-  case THEME: {
-    if (::Focus.isEOL()) {
-      for (auto led_index : Runtime.device().LEDs().all()) {
-        cRGB c = ::LEDControl.getCrgbAt(led_index.offset());
-
-        ::Focus.send(c);
-      }
-      break;
-    }
-
-    for (auto led_index : Runtime.device().LEDs().all()) {
-      if (::Focus.isEOL()) {
-        break;
-      }
-
-      cRGB color;
-
-      ::Focus.read(color);
-
-      ::LEDControl.setCrgbAt(led_index.offset(), color);
-    }
-    break;
-  }
-  }
-
-  return EventHandlerResult::EVENT_CONSUMED;
-}
 
 }  // namespace plugin
 }  // namespace kaleidoscope
 
 kaleidoscope::plugin::LEDControl LEDControl;
-kaleidoscope::plugin::FocusLEDCommand FocusLEDCommand;

@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2018  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -26,6 +32,7 @@
 #include "kaleidoscope/hooks.h"                 // for Hooks
 #include "kaleidoscope/key_defs.h"              // for Key, Key_Transparent
 #include "kaleidoscope/layers.h"                // for Layer, Layer_
+#include "kaleidoscope/power_event.h"           // for PowerEvent
 #include "kaleidoscope_internal/device.h"       // for device
 
 namespace kaleidoscope {
@@ -207,6 +214,18 @@ class Runtime_ {
       key = Layer.lookupOnActiveLayer(key_addr);
     }
     return key;
+  }
+
+  /** Trigger a power-related event
+   *
+   * This method is called to notify plugins about power-related events like
+   * battery warnings, shutdown, or power source changes.
+   * 
+   * @param event The type of power event that occurred
+   * @param voltage_mv The current battery voltage in millivolts
+   */
+  void handlePowerEvent(PowerEvent event, uint16_t voltage_mv = 0) {
+    kaleidoscope::Hooks::onPowerEvent(event, voltage_mv);
   }
 
  private:

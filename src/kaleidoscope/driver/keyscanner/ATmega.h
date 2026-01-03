@@ -1,10 +1,16 @@
-/* -*- mode: c++ -*-
- * kaleidoscope::driver::keyscanner::ATmega -- AVR ATmega-based keyscanner component
- * Copyright (C) 2018-2020  Keyboard.io, Inc
+/* Kaleidoscope - Firmware for computer input devices
+ * Copyright (C) 2018-2025 Keyboard.io, inc.
+ *
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -91,7 +97,7 @@ class ATmega : public kaleidoscope::driver::keyscanner::Base<_KeyScannerProps> {
     TIMSK1 = _BV(TOIE1);
   }
 
-  __attribute__((optimize(3))) void readMatrix(void) {
+  __attribute__((optimize(2))) void readMatrix(void) {
     typename _KeyScannerProps::RowState any_debounced_changes = 0;
 
     for (uint8_t current_row = 0; current_row < _KeyScannerProps::matrix_rows; current_row++) {
@@ -117,7 +123,7 @@ class ATmega : public kaleidoscope::driver::keyscanner::Base<_KeyScannerProps> {
     actOnMatrixScan();
   }
 
-  void __attribute__((optimize(3))) actOnMatrixScan() {
+  void __attribute__((optimize(2))) actOnMatrixScan() {
     for (uint8_t row = 0; row < _KeyScannerProps::matrix_rows; row++) {
       for (uint8_t col = 0; col < _KeyScannerProps::matrix_columns; col++) {
         uint8_t keyState = (bitRead(matrix_state_[row].previous, col) << 0) | (bitRead(matrix_state_[row].current, col) << 1);

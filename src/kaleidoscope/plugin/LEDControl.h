@@ -1,9 +1,15 @@
-/* Kaleidoscope-LEDControl - LED control plugin for Kaleidoscope
- * Copyright (C) 2017-2020  Keyboard.io, Inc.
+/* Kaleidoscope - Firmware for computer input devices
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -27,16 +33,6 @@
 #include "kaleidoscope/plugin.h"                   // for Plugin
 #include "kaleidoscope/plugin/LEDMode.h"           // for LEDMode
 #include "kaleidoscope/plugin/LEDModeInterface.h"  // for LEDModeInterface
-// -----------------------------------------------------------------------------
-// Deprecation warning messages
-#include "kaleidoscope_internal/deprecations.h"  // for DEPRECATED
-
-#define _DEPRECATED_MESSAGE_FOCUSLEDCOMMAND                                  \
-  "The `FocusLEDCommand` plugin is deprecated. For its most useful\n"        \
-  "functionality - led.brightness -, please see the `LEDBrightnessConfig`\n" \
-  "plugin.\n"                                                                \
-  "This plugin will be removed after 2023-01-01."
-// -----------------------------------------------------------------------------
 
 constexpr uint8_t LED_TOGGLE = 0b00000001;  // Synthetic, internal
 
@@ -138,17 +134,9 @@ class LEDControl : public kaleidoscope::Plugin {
   static bool enabled_;
 };
 
-DEPRECATED(FOCUSLEDCOMMAND)
-class FocusLEDCommand : public Plugin {
- public:
-  FocusLEDCommand() {}
-
-  EventHandlerResult onFocusEvent(const char *input);
-};
 
 }  // namespace plugin
 
 }  // namespace kaleidoscope
 
 extern kaleidoscope::plugin::LEDControl LEDControl;
-extern kaleidoscope::plugin::FocusLEDCommand FocusLEDCommand;

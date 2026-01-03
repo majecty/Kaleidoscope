@@ -1,10 +1,15 @@
-// -*- mode: c++ -*-
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2019  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -22,6 +27,11 @@
 
 // From Kaleidoscope:
 #include "kaleidoscope/driver/hid/base/Keyboard.h"  // for Keyboard, KeyboardProps
+
+#if !BOOTKB_HYBRID
+#error "This version of Kaleidoscope requires KeyboardioHID with BOOTKB_HYBRID"
+#error "Please update your KeyboardioHID"
+#endif
 
 namespace kaleidoscope {
 namespace driver {
@@ -43,94 +53,56 @@ class BootKeyboardWrapper {
  public:
   BootKeyboardWrapper() {}
   void begin() {
-    BootKeyboard.begin();
+    BootKeyboard().begin();
   }
 
   uint8_t getProtocol() {
-    return BootKeyboard.getProtocol();
+    return BootKeyboard().getProtocol();
   }
-  void setProtocol(uint8_t protocol) {
-    BootKeyboard.setProtocol(protocol);
+
+  uint8_t getBootOnly() {
+    return BootKeyboard().getBootOnly();
   }
-  void setDefaultProtocol(uint8_t protocol) {
-    BootKeyboard.default_protocol = protocol;
-    setProtocol(protocol);
+  void setBootOnly(uint8_t bootonly) {
+    BootKeyboard().setBootOnly(bootonly);
   }
 
   void sendReport() {
-    BootKeyboard.sendReport();
+    BootKeyboard().sendReport();
   }
 
   void press(uint8_t code) {
-    BootKeyboard.press(code);
+    BootKeyboard().press(code);
   }
   void release(uint8_t code) {
-    BootKeyboard.release(code);
+    BootKeyboard().release(code);
   }
   void releaseAll() {
-    BootKeyboard.releaseAll();
+    BootKeyboard().releaseAll();
   }
 
   bool isKeyPressed(uint8_t code) {
-    return BootKeyboard.isKeyPressed(code);
+    return BootKeyboard().isKeyPressed(code);
   }
   bool isModifierActive(uint8_t code) {
-    return BootKeyboard.isModifierActive(code);
+    return BootKeyboard().isModifierActive(code);
   }
   bool wasModifierActive(uint8_t code) {
-    return BootKeyboard.wasModifierActive(code);
+    return BootKeyboard().wasModifierActive(code);
   }
   bool isAnyModifierActive() {
-    return BootKeyboard.isAnyModifierActive();
+    return BootKeyboard().isAnyModifierActive();
   }
   bool wasAnyModifierActive() {
-    return BootKeyboard.wasAnyModifierActive();
+    return BootKeyboard().wasAnyModifierActive();
   }
 
   uint8_t getLeds() {
-    return BootKeyboard.getLeds();
-  }
-};
-
-class NKROKeyboardWrapper {
- public:
-  NKROKeyboardWrapper() {}
-  void begin() {
-    Keyboard.begin();
+    return BootKeyboard().getLeds();
   }
 
-  void sendReport() {
-    Keyboard.sendReport();
-  }
-
-  void press(uint8_t code) {
-    Keyboard.press(code);
-  }
-  void release(uint8_t code) {
-    Keyboard.release(code);
-  }
-  void releaseAll() {
-    Keyboard.releaseAll();
-  }
-
-  bool isKeyPressed(uint8_t code) {
-    return Keyboard.isKeyPressed(code);
-  }
-  bool isModifierActive(uint8_t code) {
-    return Keyboard.isModifierActive(code);
-  }
-  bool wasModifierActive(uint8_t code) {
-    return Keyboard.wasModifierActive(code);
-  }
-  bool isAnyModifierActive() {
-    return Keyboard.isAnyModifierActive();
-  }
-  bool wasAnyModifierActive() {
-    return Keyboard.wasAnyModifierActive();
-  }
-
-  uint8_t getLeds() {
-    return Keyboard.getLEDs();
+  void onUSBReset() {
+    BootKeyboard().onUSBReset();
   }
 };
 
@@ -173,7 +145,6 @@ class SystemControlWrapper {
 
 struct KeyboardProps : public base::KeyboardProps {
   typedef BootKeyboardWrapper BootKeyboard;
-  typedef NKROKeyboardWrapper NKROKeyboard;
   typedef ConsumerControlWrapper ConsumerControl;
   typedef SystemControlWrapper SystemControl;
 };

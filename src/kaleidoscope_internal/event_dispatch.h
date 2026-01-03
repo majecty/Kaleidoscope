@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2018  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -155,6 +161,18 @@
                                                                           __NL__ \
      MAKE_TEMPLATE_SIGNATURE(UNWRAP TMPL_PARAM_TYPE_LIST)                 __NL__ \
      EventHandlerResult Hooks::HOOK_NAME SIGNATURE {                      __NL__ \
+                                                                          __NL__ \
+        EventHandlerResult device_result = EventHandlerResult::OK;        __NL__ \
+                                                                          __NL__ \
+          device_result = ::kaleidoscope::Runtime.device().HOOK_NAME      __NL__ \
+            ARGS_LIST;                                                    __NL__ \
+                                                                          __NL__ \
+          /* If the device consumed the event, return early */            __NL__ \
+          if (device_result != EventHandlerResult::OK) {                  __NL__ \
+            return device_result;                                         __NL__ \
+          }                                                               __NL__ \
+                                                                          __NL__ \
+        /* Dispatch to plugins if the device didn't handle it */          __NL__ \
         return kaleidoscope_internal::EventDispatcher::template           __NL__ \
         apply<kaleidoscope_internal                                       __NL__ \
            ::_NAME4(EventHandler_, HOOK_NAME, _v, HOOK_VERSION)           __NL__ \

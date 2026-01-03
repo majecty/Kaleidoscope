@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2020  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -63,7 +69,7 @@ class MatrixAddr {
   //constexpr MatrixAddr(ThisType &&other) : offset_(other.offset_) {}
 
   ThisType &operator=(const ThisType &) = default;
-  ThisType &operator=(ThisType &&) = default;
+  ThisType &operator=(ThisType &&)      = default;
 
   template<typename MatrixAddr__>
   explicit constexpr MatrixAddr(const MatrixAddr__ &other)

@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2021  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -33,6 +39,12 @@ class FocusSerial;
 class LEDControl;
 }  // namespace plugin
 
+namespace driver {
+namespace ble {
+class BLEBluefruit;  // Forward declaration
+}  // namespace ble
+}  // namespace driver
+
 namespace sketch_exploration {
 void pluginsExploreSketch();
 }  // namespace sketch_exploration
@@ -51,12 +63,17 @@ class Hooks {
   // The following friend declarations restrict access to
   // the hook routing system.
 
-  // Runtime_ calls Hooks::onSetup, Hooks::beforeReportingState
-  // and Hooks::afterEachCycle.
+  // Runtime_ calls various hooks including Hooks::onSetup, Hooks::beforeReportingState,
+  // Hooks::afterEachCycle, and Hooks::onPowerEvent.
   friend class Layer_;
   friend class Runtime_;
   friend class plugin::FocusSerial;
   friend class plugin::LEDControl;
+  friend class driver::ble::BLEBluefruit;  // Allow BLEBluefruit to trigger BLE connection hooks
+#ifdef ARDUINO_NRF52_ADAFRUIT
+  template<typename _Props>
+  friend class driver::mcu::nRF52840;  // Allow nRF52840 to trigger USB connection hooks
+#endif
   friend void sketch_exploration::pluginsExploreSketch();
 
  private:

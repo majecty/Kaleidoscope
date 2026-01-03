@@ -1,11 +1,16 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-PrefixLayer -- Sends a prefix key for every key in a layer.
+/* Kaleidoscope-PrefixLayer -- Sends a prefix key for every key in a layer.
  * Copyright (C) 2017, 2022  iliana etaoin <iliana@buttslol.net>
  * Copyright (C) 2017  James Cash
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -15,7 +20,6 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "kaleidoscope/plugin/PrefixLayer.h"
 
 #include <Arduino.h>  // for PROGMEM
@@ -44,8 +48,8 @@ EventHandlerResult PrefixLayer::onKeyEvent(KeyEvent &event) {
     return EventHandlerResult::OK;
 
   for (uint8_t i = 0; i < prefix_layers_length_; i++) {
-    if (Layer.isActive(prefix_layers_[i].layer)) {
-      current_prefix_ = prefix_layers_[i].prefix;
+    if (Layer.isActive(pgm_read_byte(&prefix_layers_[i].layer))) {
+      current_prefix_ = prefix_layers_[i].prefix.readFromProgmem();
       Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), IS_PRESSED | INJECTED, current_prefix_});
       Runtime.handleKeyEvent(KeyEvent{KeyAddr::none(), WAS_PRESSED | INJECTED, current_prefix_});
       current_prefix_ = Key_NoKey;
@@ -61,11 +65,6 @@ EventHandlerResult PrefixLayer::onAddToReport(Key key) {
   }
 
   return EventHandlerResult::OK;
-}
-
-void PrefixLayer::setPrefixLayers(const PrefixLayer::Entry *prefix_layers) {
-  prefix_layers_        = prefix_layers;
-  prefix_layers_length_ = sizeof(prefix_layers) / sizeof(PrefixLayer::Entry);
 }
 
 const PrefixLayer::Entry *PrefixLayer::getPrefixLayers() {

@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-Hardware-Model01 -- Keyboard.io Model01 hardware support for Kaleidoscope
- * Copyright (C) 2017-2020  Keyboard.io, Inc
+/* Kaleidoscope-Hardware-Keyboardio-Model01 -- Keyboardio Model01 hardware support for Kaleidoscope
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -33,7 +38,9 @@
 // IWYU pragma: no_include "kaleidoscope/KeyAddr.h"
 
 #define CRGB(r, g, b) \
-  (cRGB) { b, g, r }
+  (cRGB) {            \
+    b, g, r           \
+  }
 
 struct cRGB {
   uint8_t b;

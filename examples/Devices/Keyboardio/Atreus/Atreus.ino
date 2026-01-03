@@ -176,6 +176,7 @@ KALEIDOSCOPE_INIT_PLUGINS(
                           //  EscapeOneShot,
                           EEPROMSettings,
                           //                          EEPROMKeymap,
+                          //
                           //                          Focus,
                           //                          FocusEEPROMCommand,
                           //                          FocusSettingsCommand,

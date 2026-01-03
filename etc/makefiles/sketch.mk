@@ -56,7 +56,7 @@ possible_fqbn = $(firstword $(possible_fqbns))
 $(info *************************************************************** )
 $(info )
 $(info  Arduino couldn't figure out what kind of device this sketch )
-$(info  is for. Usually, Arduino looks in a file called `sketch.json` )
+$(info  is for. Usually, Arduino looks in a file called `sketch.yaml` )
 $(info  to figure this out. )
 ifneq ($(possible_fqbn),)
 
@@ -71,7 +71,7 @@ $(info  $(ARDUINO_CLI) board attach $(possible_fqbn))
 $(info ) 
 $(info If the build fails or $(possible_fqbn) doesn't)
 $(info look like your keyboard, you may need to manually edit your)
-$(info `sketch.json` file or run )
+$(info `sketch.yaml` file or run )
 $(info )
 $(info  $(ARDUINO_CLI) board attach )
 $(info )
@@ -83,7 +83,7 @@ else
 
 $(info )
 $(info I'm unable to detect your keyboard, you may need to manually )
-$(info edit your `sketch.json` file or run )
+$(info edit your `sketch.yaml` file or run )
 $(info )
 $(info  $(ARDUINO_CLI) board attach )
 $(info )
@@ -107,7 +107,7 @@ endif
 #	@: # dummy recipe for the sketch file
 
 
-.PHONY: compile configure-arduino-cli install-arduino-core-kaleidoscope install-arduino-core-avr 
+.PHONY: compile 
 .PHONY: disassemble decompile size-map flash clean all test
 
 all: compile 
@@ -161,18 +161,27 @@ ifneq ($(KALEIDOSCOPE_LOCAL_LIB_DIR),)
 _arduino_local_libraries_prop =  --libraries "${KALEIDOSCOPE_LOCAL_LIB_DIR}"
 endif
 
-compile: kaleidoscope-hardware-configured
+# Check if the .kaleidoscope_board file exists
+ifneq ("$(wildcard ${SKETCH_DIR}/.kaleidoscope_board)","")
+    # Read the content of the file
+    KALEIDOSCOPE_BOARD_CONTENT := $(shell cat ${SKETCH_DIR}/.kaleidoscope_board)
+
+    # Set the kaleidoscope_board_config variable
+    kaleidoscope_board_config := --build-property compiler.cpp.extra_flags=-DKALEIDOSCOPE_HARDWARE_H=\"$(KALEIDOSCOPE_BOARD_CONTENT)\"
+endif
 
 
+compile: kaleidoscope-hardware-configured check-rosetta
 	-$(QUIET) install -d "${OUTPUT_PATH}"
-	$(QUIET) $(ARDUINO_CLI) compile --fqbn "${FQBN}" ${ARDUINO_VERBOSE} ${ccache_wrapper_property} ${local_cflags_property} \
-	  ${_arduino_local_libraries_prop} ${_ARDUINO_CLI_COMPILE_CUSTOM_FLAGS} \
+	$(QUIET) \
+	ARDUINO_BUILD_CACHE_EXTRA_PATHS="${BUILD_PATH}" \
+	$(ARDUINO_CLI) compile --fqbn "${FQBN}" ${ARDUINO_VERBOSE} ${ccache_wrapper_property} ${local_cflags_property} \
+	  ${_arduino_local_libraries_prop} ${_ARDUINO_CLI_COMPILE_CUSTOM_FLAGS} ${kaleidoscope_board_config}\
 	  --library "${KALEIDOSCOPE_DIR}" \
 	  --libraries "${KALEIDOSCOPE_DIR}/plugins/" \
 	  --build-path "${BUILD_PATH}" \
-	  --output-dir "${OUTPUT_PATH}" \
-	  --build-cache-path "${CORE_CACHE_PATH}" \
-	  "${SKETCH_FILE_PATH}"
+	  --output-dir "${OUTPUT_PATH}" -j 0 \
+	  "${SKETCH_FILE_PATH}" $(if $(VERBOSE),,> /dev/null)
 ifeq ($(LIBONLY),)
 	$(QUIET) cp "${BUILD_PATH}/${SKETCH_FILE_NAME}.hex" "${HEX_FILE_PATH}"
 	$(QUIET) cp "${BUILD_PATH}/${SKETCH_FILE_NAME}.elf" "${ELF_FILE_PATH}"
@@ -180,6 +189,7 @@ ifeq ($(LIBONLY),)
 	$(QUIET) ln -sf "${OUTPUT_FILE_PREFIX}.hex" "${OUTPUT_PATH}/${SKETCH_BASE_NAME}-latest.hex"
 	$(QUIET) ln -sf "${OUTPUT_FILE_PREFIX}.elf" "${OUTPUT_PATH}/${SKETCH_BASE_NAME}-latest.elf"
 	$(QUIET) if [ -e "${OUTPUT_PATH}/${OUTPUT_FILE_PREFIX}.bin" ]; then ln -sf "${OUTPUT_FILE_PREFIX}.bin" "${OUTPUT_PATH}/${SKETCH_BASE_NAME}-latest.bin"; else :; fi
+	$(QUIET) if [ -e "${BIN_FILE_PATH}" ]; then echo "Firmware build at ${BIN_FILE_PATH}"; else echo "Firmware build at ${HEX_FILE_PATH}"; fi
 else    
 	$(QUIET) cp "${BUILD_PATH}/${SKETCH_FILE_NAME}.a" "${LIB_FILE_PATH}"
 	$(QUIET) ln -sf "${OUTPUT_FILE_PREFIX}.a" "${OUTPUT_PATH}/${SKETCH_BASE_NAME}-latest.a"
@@ -194,6 +204,9 @@ endif
 
 flashing_instructions = $(call _arduino_prop,build.flashing_instructions)
 
+# Filter out board options from FQBN because board list omits them
+fqbn_no_opts := $(shell echo $(FQBN) | sed 's/:[a-z_][0-9a-z_.]*=.*$$//')
+
 flash: ${HEX_FILE_PATH}
 ifneq ($(flashing_instructions),)
 	$(info $(shell printf $(flashing_instructions)))
@@ -205,6 +218,6 @@ endif
 	$(info )
 	@$(shell read _)
 	$(QUIET) $(ARDUINO_CLI) upload --fqbn $(FQBN) \
-	$(shell $(ARDUINO_CLI) board list --format=text | grep $(FQBN) | awk '{ print "--port", $$1; exit }' ) \
+	$(shell $(ARDUINO_CLI) board list --format=text | grep $(fqbn_no_opts) | awk '{ print "--port", $$1; exit }' ) \
 	--input-dir "${OUTPUT_PATH}" \
 	$(ARDUINO_VERBOSE)

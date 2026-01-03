@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2021  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -16,6 +22,8 @@
 
 // clang-format off
 
+#include "kaleidoscope/host_connection_status.h"
+#include "kaleidoscope/power_event.h"
 #pragma once
 
 // This file defines the names and argument signatures for all event handlers
@@ -36,6 +44,9 @@
 
 #define _ABORTABLE true
 #define _NOT_ABORTABLE false
+
+// Define the callback for the LED mode hook handler
+typedef void (*LedModeCallback)(const char*);
 
 #define _CURRENT_IMPLEMENTATION
 
@@ -124,6 +135,17 @@ class SignatureCheckDummy {};
              _NOT_ABORTABLE,                                              __NL__ \
              (), (), (),                                                  __NL__ \
              (), (), ##__VA_ARGS__)                                       __NL__ \
+                                                                          __NL__ \
+   /* Called by Focus, when handling the `led.modes` command. */          __NL__ \
+   /* Is implemented in LEDModeInterface.h, but depends on */             __NL__ \
+   /* the LED plugin to set `led_mode_name_`. */                          __NL__ \
+   OPERATION(onLedEffectQuery,                                            __NL__ \
+             1,                                                           __NL__ \
+             _CURRENT_IMPLEMENTATION,                                     __NL__ \
+             _NOT_ABORTABLE,                                              __NL__ \
+             (), (), (), /* non template */                               __NL__ \
+             (LedModeCallback callback),                                  __NL__ \
+             (callback), ##__VA_ARGS__)                                   __NL__ \
                                                                           __NL__ \
    OPERATION(onSetup,                                                     __NL__ \
              1,                                                           __NL__ \
@@ -272,7 +294,26 @@ class SignatureCheckDummy {};
                (,_Sketch),                                                __NL__ \
                (,kaleidoscope::SignatureCheckDummy),                      __NL__ \
                (),                                                        __NL__ \
-               (),##__VA_ARGS__)
+               (),##__VA_ARGS__)                                          __NL__ \
+                                                                          __NL__ \
+   /* Called when a host's connection status changes */                   __NL__ \
+   OPERATION(onHostConnectionStatusChanged,                              __NL__ \
+             1,                                                          __NL__ \
+             _CURRENT_IMPLEMENTATION,                                    __NL__ \
+             _NOT_ABORTABLE,                                            __NL__ \
+             (),(),(), /* non template */                               __NL__ \
+             (uint8_t device_id, kaleidoscope::HostConnectionStatus status),          __NL__ \
+             (device_id, status), ##__VA_ARGS__)                        __NL__ \
+                                                                         __NL__ \
+   /* Called when power-related events occur, such as battery warnings, */     __NL__ \
+   /* battery shutdown, power source changes, etc. */                    __NL__ \
+   OPERATION(onPowerEvent,                                               __NL__ \
+             1,                                                          __NL__ \
+             _CURRENT_IMPLEMENTATION,                                    __NL__ \
+             _NOT_ABORTABLE,                                             __NL__ \
+             (),(),(), /* non template */                                __NL__ \
+             (kaleidoscope::PowerEvent event, uint16_t voltage_mv),      __NL__ \
+             (event, voltage_mv), ##__VA_ARGS__)
 
 // The following function macro lists event handler/hook method names and
 // available versions. It is used to auto-generate code that is
@@ -297,6 +338,10 @@ class SignatureCheckDummy {};
    START(onSetup, 1)                                                    __NL__ \
       OP(onSetup, 1)                                                    __NL__ \
    END(onSetup, 1)                                                      __NL__ \
+                                                                        __NL__ \
+   START(onLedEffectQuery, 1)                                           __NL__ \
+      OP(onLedEffectQuery, 1)                                           __NL__ \
+   END(onLedEffectQuery, 1)                                             __NL__ \
                                                                         __NL__ \
    START(onNameQuery, 1)                                                __NL__ \
       OP(onNameQuery, 1)                                                __NL__ \
@@ -348,4 +393,12 @@ class SignatureCheckDummy {};
                                                                         __NL__ \
    START(exploreSketch, 1)                                              __NL__ \
       OP(exploreSketch, 1)                                              __NL__ \
-   END(exploreSketch, 1)
+   END(exploreSketch, 1)                                                __NL__ \
+                                                                        __NL__ \
+   START(onHostConnectionStatusChanged, 1)                               __NL__ \
+      OP(onHostConnectionStatusChanged, 1)                               __NL__ \
+   END(onHostConnectionStatusChanged, 1)                                 __NL__ \
+                                                                         __NL__ \
+   START(onPowerEvent, 1)                                                __NL__ \
+      OP(onPowerEvent, 1)                                                __NL__ \
+   END(onPowerEvent, 1)                                                  

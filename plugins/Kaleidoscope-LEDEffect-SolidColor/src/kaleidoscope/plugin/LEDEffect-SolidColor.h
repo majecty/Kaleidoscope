@@ -1,9 +1,15 @@
-/* Kaleidoscope-LEDEffect-SolidColor - Solid color LED effects for Kaleidoscope.
- * Copyright (C) 2017  Keyboard.io, Inc.
+/* Kaleidoscope-LEDEffect-SolidColor -- Solid color LED effects for Kaleidoscope.
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -29,7 +35,14 @@ class LEDSolidColor : public Plugin,
                       public LEDModeInterface {
  public:
   LEDSolidColor(uint8_t r, uint8_t g, uint8_t b)
-    : r_(r), g_(g), b_(b) {}
+    : r_(r), g_(g), b_(b) {
+    led_mode_name_ = "SolidColor";
+  }
+
+  LEDSolidColor(const char *led_mode_name, uint8_t r, uint8_t g, uint8_t b)
+    : r_(r), g_(g), b_(b) {
+    led_mode_name_ = led_mode_name;
+  }
 
   // This class' instance has dynamic lifetime
   //

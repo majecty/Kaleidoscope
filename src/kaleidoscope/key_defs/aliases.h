@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2018  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -65,3 +71,12 @@
 
 #define MEH(k)    LCTRL(LSHIFT(LALT((k))))
 #define HYPER(k)  LGUI(MEH((k)))
+
+// Apple's "globe" key (Consumer Control version).  This key will bring up the
+// emoji tool on MacOS, just like tapping on the `fn` key on an Apple keyboard.
+// Unfortunately, it does not act as the `fn` "modifier" when held, however;
+// that key has no equivalent in the USB HID tables, so there's no way for a
+// third-party keyboard to emulate it.  This alias is included here because it
+// doesn't have any obvious relationship to the "next keyboard layout select"
+// canonical name in the HID tables.
+#define Key_Apple_Globe Consumer_AC_NextKeyboardLayoutSelect

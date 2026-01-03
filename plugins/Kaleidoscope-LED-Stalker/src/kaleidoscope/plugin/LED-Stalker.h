@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope-LED-Stalker -- Stalk keys pressed by lighting up and fading back the LED under them
- * Copyright (C) 2017, 2018  Keyboard.io, Inc
+/* Kaleidoscope-LED-Stalker -- Stalk keys pressed by lighting up and fading back the LED under them
+ * Copyright 2017-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -36,6 +41,9 @@ class StalkerEffect : public Plugin,
                       public LEDModeInterface,
                       public AccessTransientLEDMode {
  public:
+  StalkerEffect() { led_mode_name_ = "Stalker"; }
+  explicit StalkerEffect(const char *led_mode_name) { led_mode_name_ = led_mode_name; }
+
   class ColorComputer {
    public:
     virtual cRGB compute(uint8_t *step) = 0;
@@ -44,8 +52,6 @@ class StalkerEffect : public Plugin,
   static ColorComputer *variant;
   static uint16_t step_length;
   static cRGB inactive_color;
-
-  EventHandlerResult onKeyEvent(KeyEvent &event);
 
   // This class' instance has dynamic lifetime
   //

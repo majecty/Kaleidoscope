@@ -1,5 +1,8 @@
 *~
+**/*uf2
+.DS_Store
 .arduino
+.vscode
 /.docker_xfer
 .#*
 /output/
@@ -12,4 +15,6 @@
 /_build/
 /results/
 generated-testcase.cpp
-.arduino
+bin/arduino-cli
+*/tmp/*
+plugins/Kaleidoscope-Hardware-Keyboardio-Preonic/examples/Devices/Keyboardio/Preonic/tmp/*

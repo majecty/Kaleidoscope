@@ -1,10 +1,15 @@
-/* -*- mode: c++ -*-
- * Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2022  Keyboard.io, Inc.
+/* Kaleidoscope-OneShot -- One-shot modifiers and layers
+ * Copyright 2022-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -30,15 +35,13 @@ namespace kaleidoscope {
 namespace plugin {
 
 EventHandlerResult OneShotConfig::onSetup() {
-  settings_addr_ = ::EEPROMSettings.requestSlice(sizeof(::OneShot.settings_));
+  bool success = ::EEPROMSettings.requestSliceAndLoadData(&settings_base_, &::OneShot.settings_);
 
-  // If the EEPROM is empty, store the default settings.
-  if (Runtime.storage().isSliceUninitialized(settings_addr_, sizeof(::OneShot.settings_))) {
-    Runtime.storage().put(settings_addr_, ::OneShot.settings_);
+  if (!success) {
+    Runtime.storage().put(settings_base_, ::OneShot.settings_);
     Runtime.storage().commit();
   }
 
-  Runtime.storage().get(settings_addr_, ::OneShot.settings_);
   return EventHandlerResult::OK;
 }
 
@@ -144,7 +147,7 @@ EventHandlerResult OneShotConfig::onFocusEvent(const char *input) {
     default:
       return EventHandlerResult::ABORT;
     }
-    Runtime.storage().put(settings_addr_, ::OneShot.settings_);
+    Runtime.storage().put(settings_base_, ::OneShot.settings_);
     Runtime.storage().commit();
   }
 

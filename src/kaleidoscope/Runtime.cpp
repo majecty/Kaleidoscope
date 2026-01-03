@@ -1,9 +1,15 @@
 /* Kaleidoscope - Firmware for computer input devices
- * Copyright (C) 2013-2021  Keyboard.io, Inc.
+ * Copyright (C) 2013-2025 Keyboard.io, inc.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, version 3.
+ *
+ * Additional Permissions:
+ * As an additional permission under Section 7 of the GNU General Public
+ * License Version 3, you may link this software against a Vendor-provided
+ * Hardware Specific Software Module under the terms of the MCU Vendor
+ * Firmware Library Additional Permission Version 1.0.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -19,18 +25,20 @@
 #include <Arduino.h>         // for millis
 #include <HardwareSerial.h>  // for HardwareSerial
 
-#include "kaleidoscope/KeyAddr.h"                         // for KeyAddr, MatrixAddr, MatrixAddr...
-#include "kaleidoscope/KeyEvent.h"                        // for KeyEvent
-#include "kaleidoscope/LiveKeys.h"                        // for LiveKeys, live_keys
-#include "kaleidoscope/device/device.h"                   // for Base<>::HID, VirtualProps::HID
-#include "kaleidoscope/driver/hid/keyboardio/Keyboard.h"  // for Keyboard
-#include "kaleidoscope/keyswitch_state.h"                 // for keyToggledOff, keyToggledOn
-#include "kaleidoscope/layers.h"                          // for Layer, Layer_
+#include "kaleidoscope/KeyAddr.h"                   // for KeyAddr, MatrixAddr, MatrixAddr...
+#include "kaleidoscope/KeyEvent.h"                  // for KeyEvent
+#include "kaleidoscope/LiveKeys.h"                  // for LiveKeys, live_keys
+#include "kaleidoscope/device/device.h"             // for Base<>::HID, VirtualProps::HID
+#include "kaleidoscope/driver/hid/base/Keyboard.h"  // for Keyboard
+#include "kaleidoscope/keyswitch_state.h"           // for keyToggledOff, keyToggledOn
+#include "kaleidoscope/layers.h"                    // for Layer, Layer_
 
 namespace kaleidoscope {
 
 uint32_t Runtime_::millis_at_cycle_start_;
 KeyAddr Runtime_::last_addr_toggled_on_ = KeyAddr::none();
+
+static void onUSBReset();
 
 Runtime_::Runtime_(void) {
 }
@@ -41,6 +49,7 @@ void Runtime_::setup(void) {
   // rest of the hooks we'll call do, they'll be able to rely on an initialized
   // device.
   device().setup();
+  device().setUSBResetHook(onUSBReset);
 
   // We are explicitly initializing the Serial port as early as possible to
   // (temporarily, hopefully) work around an issue on OSX. If we initialize
@@ -50,7 +59,7 @@ void Runtime_::setup(void) {
   //
   // TODO(anyone): Figure out a way we can get rid of this, and fix the bug
   // properly.
-  device().serialPort().begin(9600);
+  device().initSerial();
 
   kaleidoscope::sketch_exploration::pluginsExploreSketch();
   kaleidoscope::Hooks::onSetup();
@@ -65,6 +74,10 @@ void Runtime_::setup(void) {
 void Runtime_::loop(void) {
   millis_at_cycle_start_ = millis();
 
+  if (device().pollUSBReset()) {
+    device().hid().onUSBReset();
+  }
+
   kaleidoscope::Hooks::beforeEachCycle();
 
   // Next, we scan the keyswitches. Any toggle-on or toggle-off events will
@@ -76,7 +89,11 @@ void Runtime_::loop(void) {
   // event is being handled at a time.
   device().scanMatrix();
 
+
   kaleidoscope::Hooks::afterEachCycle();
+
+  // Let the device handle power management between cycles
+  device().betweenCycles();
 }
 
 // ----------------------------------------------------------------------------
@@ -298,6 +315,14 @@ void Runtime_::sendKeyboardReport(const KeyEvent &event) {
 }
 
 Runtime_ Runtime;
+
+/*
+ * Static hook function for USB reset handler. Has to be here, because there's
+ * no good way to get the global Runtime object from inside the driver object.
+ */
+static void onUSBReset() {
+  Runtime.device().hid().onUSBReset();
+}
 
 }  // namespace kaleidoscope
 
