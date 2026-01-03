@@ -56,7 +56,6 @@
 #define Key_RightCurl LSHIFT(Key_RightBracket)
 #define Key_LessThan  LSHIFT(Key_Comma)
 #define Key_GreaterThan LSHIFT(Key_Period)
-#define Key_Question LSHIFT(Key_Slash)
 
 enum {
   MACRO_QWERTY,
@@ -84,24 +83,24 @@ KEYMAPS(
        Key_Q   ,Key_W   ,Key_E       ,Key_R         ,Key_T
       ,Key_A   ,Key_S   ,Key_D       ,Key_F         ,Key_G
       ,Key_Z   ,Key_X   ,Key_C       ,Key_V         ,Key_B         ,Key_Delete
-      ,Key_Lang1,Key_Tab,LSHIFT(Key_Tab),Key_Tab       ,Key_Space     ,Key_Backspace
+      ,Key_Lang1,Key_Tab ,Key_LeftGui ,Key_Backtick  ,Key_Space     ,Key_Backspace
 
                      ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
-       ,Key_F13      ,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
+       ,Key_Backslash,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
        ,Key_Lang1    ,Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_F14
   ),
 
   [SYMBOL] = KEYMAP_STACKED
   (
-       Key_Exclamation ,Key_At      ,Key_LeftCurl   ,Key_RightCurl   ,Key_And
-      ,Key_Hash        ,Key_Dollar  ,Key_LeftParen  ,Key_RightParen  ,Key_Minus
-      ,Key_Percent     ,Key_Caret   ,Key_LeftBracket,Key_RightBracket,Key_Equals  ,___
-      ,___             ,___         ,___          ,___           ,___                ,___
+       Key_Exclamation ,Key_At           ,Key_Underscore   ,Key_Tab     ,LSHIFT(Key_Tab)
+      ,Key_Hash        ,Key_Dollar       ,Key_Minus        ,Key_Esc     ,LSHIFT(Key_Esc)
+      ,Key_Percent     ,Key_Caret        ,Key_Tilde        ,Key_Colon   ,___                ,___
+      ,___             ,___              ,___              ,___         ,___                ,___
 
-                   ,Key_Star       ,Key_Backtick ,Key_Tilde     ,Key_Semicolon  ,Key_DBLQuote
-                   ,Key_Underscore ,Key_Backslash,Key_Pipe      ,Key_Colon  ,Key_Quote
-      ,___         ,Key_Plus       ,Key_LessThan ,Key_GreaterThan       ,Key_Slash,Key_Question
+                   ,M(MACRO_DBL_BQ),Key_Tilde ,Key_DBLQuote    ,Key_Pipe  ,Key_Backslash
+                   ,Key_Plus       ,Key_Minus ,Key_Slash       ,Key_Star  ,Key_Quote
+      ,___         ,Key_And        ,Key_Equals,Key_Comma       ,Key_Period,Key_Semicolon
       ,___         ,___            ,___       ,___             ,___       ,___
    ),
 
@@ -114,7 +113,7 @@ KEYMAPS(
 
                 ,Key_6         ,Key_7               ,Key_8           ,Key_9          ,Key_0
                 ,Key_LeftArrow ,Key_DownArrow       ,Key_UpArrow     ,Key_RightArrow ,Key_LeftShift
-      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_F15
+      ,___      ,Key_F11       ,Key_F12             ,Key_F13         ,Key_F14        ,Key_Quote
       ,___      ,___           ,___                 ,___             ,___            ,___
    ),
 
@@ -174,75 +173,25 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
-  // ----------------------------------------------------------------------
-  // Chrysalis plugins
-
-  // The EEPROMSettings & EEPROMKeymap plugins make it possible to have an
-  // editable keymap in EEPROM.
-  EEPROMSettings,
-  EEPROMKeymap,
-
-  // Focus allows bi-directional communication with the host, and is the
-  // interface through which the keymap in EEPROM can be edited.
-  Focus,
-
-  // FocusSettingsCommand adds a few Focus commands, intended to aid in
-  // changing some settings of the keyboard, such as the default layer (via the
-  // `settings.defaultLayer` command)
-  FocusSettingsCommand,
-
-  // FocusEEPROMCommand adds a set of Focus commands, which are very helpful in
-  // both debugging, and in backing up one's EEPROM contents.
-  FocusEEPROMCommand,
-
-  // The FirmwareVersion plugin lets Chrysalis query the version of the firmware
-  // programmatically.
-  FirmwareVersion,
-
-  // The LayerNames plugin allows Chrysalis to display - and edit - custom layer
-  // names, to be shown instead of the default indexes.
-  LayerNames,
-
-  // ----------------------------------------------------------------------
-  // Keystroke-handling plugins
-
-  // The Qukeys plugin enables the "Secondary action" functionality in
-  // Chrysalis. Keys with secondary actions will have their primary action
-  // performed when tapped, but the secondary action when held.
+                          //  EscapeOneShot,
+                          EEPROMSettings,
+                          //                          EEPROMKeymap,
+                          //                          Focus,
+                          //                          FocusEEPROMCommand,
+                          //                          FocusSettingsCommand,
   Qukeys,
-
-  // SpaceCadet can turn your shifts into parens on tap, while keeping them as
-  // Shifts when held. SpaceCadetConfig lets Chrysalis configure some aspects of
-  // the plugin.
-  SpaceCadet,
-  SpaceCadetConfig,
-
-  // Enables the "Sticky" behavior for modifiers, and the "Layer shift when
-  // held" functionality for layer keys.
+  //  SpaceCadet,
   OneShot,
-  OneShotConfig,
-  EscapeOneShot,
-  EscapeOneShotConfig,
-
-  // The macros plugin adds support for macros
   Macros,
-
-  // Enables dynamic, Chrysalis-editable macros.
   DynamicMacros,
-
-  // The MouseKeys plugin lets you add keys to your keymap which move the mouse.
   MouseKeys,
-  MouseKeysConfig  //,
-
-  // The MagicCombo plugin lets you use key combinations to trigger custom
-  // actions - a bit like Macros, but triggered by pressing multiple keys at the
-  // same time.
-  // MagicCombo,
-
-  // Enables the GeminiPR Stenography protocol. Unused by default, but with the
-  // plugin enabled, it becomes configurable - and then usable - via Chrysalis.
-  // GeminiPR,
-);
+  //  EscapeOneShotConfig,
+  FirmwareVersion
+                          //                          LayerNames,
+  //  SpaceCadetConfig,
+                          //  OneShotConfig,
+                          //  MouseKeysConfig
+                          );
 
 int lastPressedMouseMacro = 0;
 
@@ -357,7 +306,8 @@ void setup() {
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 5), Key_LeftShift),    // thumb outer
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 6), Key_LeftGui),    // thumb outer
-      // kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // between
+
+      kaleidoscope::plugin::Qukey(0, KeyAddr(2, 5), ShiftToLayer(PLAIN)),    // between
 
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 4), ShiftToLayer(SYMBOL)),    // thumb fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(3, 7), ShiftToLayer(NUMBER)),    // thumb fun
@@ -368,7 +318,7 @@ void setup() {
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 3), ShiftToLayer(PAREN)),    // index fun
       kaleidoscope::plugin::Qukey(0, KeyAddr(1, 8), ShiftToLayer(MOUSE)),    // index fun
 
-      // kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
+      kaleidoscope::plugin::Qukey(MOUSE, KeyAddr(3, 8), ShiftToLayer(MOUSE_WARP)),    // thumb inner
   )
 
   updateMouseSpeed(MACRO_MOUSE_NORMAL);
