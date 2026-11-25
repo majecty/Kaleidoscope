@@ -175,10 +175,11 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
+  // L+; 조합을 먼저 잡아야 한다 — Qukeys가 먼저면 l/;가 LeftAlt/LeftControl로 바뀌어 Chord가 못 본다.
+  Chord,
+
   // Qukeys는 겹처 치기 판정을 먼저 하도록 목록 맨 앞에 둔다(플러그인 문서 권장).
   Qukeys,
-  // L+; 동시 입력을 ' 로 바꾸는 조합 플러그인(구성 키는 억제됨)
-  Chord,
 
   // ----------------------------------------------------------------------
   // Chrysalis plugins
