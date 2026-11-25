@@ -31,6 +31,7 @@
 #include "Kaleidoscope-MouseKeys.h"
 #include "Kaleidoscope-OneShot.h"
 #include "Kaleidoscope-Qukeys.h"
+#include "Kaleidoscope-Chord.h"
 #include "Kaleidoscope-SpaceCadet.h"
 #include "Kaleidoscope-DynamicMacros.h"
 #include "Kaleidoscope-LayerNames.h"
@@ -176,6 +177,8 @@ KEYMAPS(
 KALEIDOSCOPE_INIT_PLUGINS(
   // Qukeys는 겹처 치기 판정을 먼저 하도록 목록 맨 앞에 둔다(플러그인 문서 권장).
   Qukeys,
+  // L+; 동시 입력을 ' 로 바꾸는 조합 플러그인(구성 키는 억제됨)
+  Chord,
 
   // ----------------------------------------------------------------------
   // Chrysalis plugins
@@ -183,7 +186,8 @@ KALEIDOSCOPE_INIT_PLUGINS(
   // The EEPROMSettings & EEPROMKeymap plugins make it possible to have an
   // editable keymap in EEPROM.
   EEPROMSettings,
-  EEPROMKeymap,
+  // EEPROMKeymap 은 setup()에서 쓰지 않으므로 비활성(플래시 공간 절약)
+  // EEPROMKeymap,
 
   // Focus allows bi-directional communication with the host, and is the
   // interface through which the keymap in EEPROM can be edited.
@@ -217,15 +221,17 @@ KALEIDOSCOPE_INIT_PLUGINS(
   // SpaceCadet can turn your shifts into parens on tap, while keeping them as
   // Shifts when held. SpaceCadetConfig lets Chrysalis configure some aspects of
   // the plugin.
-  SpaceCadet,
-  SpaceCadetConfig,
+  // SpaceCadet/SpaceCadetConfig 는 사용하지 않아 비활성(플래시 공간 절약)
+  // SpaceCadet,
+  // SpaceCadetConfig,
 
   // Enables the "Sticky" behavior for modifiers, and the "Layer shift when
   // held" functionality for layer keys.
   OneShot,
   OneShotConfig,
-  EscapeOneShot,
-  EscapeOneShotConfig,
+  // EscapeOneShot/EscapeOneShotConfig 는 사용하지 않아 비활성(플래시 공간 절약)
+  // EscapeOneShot,
+  // EscapeOneShotConfig,
 
   // The macros plugin adds support for macros
   Macros,
@@ -341,6 +347,9 @@ void setup() {
   Qukeys.setHoldTimeout(280);
   Qukeys.setMinimumPriorInterval(150);
   Qukeys.setMaxIntervalForTapRepeat(175);
+
+  // l과 ; 를 동시에 누르면 '(Key_Quote)가 나온다
+  CHORDS(CHORD(Key_L, Key_Semicolon), Key_Quote);
   //  EEPROMKeymap.setup(10);
 
   DynamicMacros.reserve_storage(48);
