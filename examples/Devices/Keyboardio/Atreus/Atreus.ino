@@ -174,6 +174,9 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
+  // Qukeys는 겹처 치기 판정을 먼저 하도록 목록 맨 앞에 둔다(플러그인 문서 권장).
+  Qukeys,
+
   // ----------------------------------------------------------------------
   // Chrysalis plugins
 
@@ -209,7 +212,7 @@ KALEIDOSCOPE_INIT_PLUGINS(
   // The Qukeys plugin enables the "Secondary action" functionality in
   // Chrysalis. Keys with secondary actions will have their primary action
   // performed when tapped, but the secondary action when held.
-  Qukeys,
+  // (목록 맨 앞으로 옮김 — 위 정의 참고)
 
   // SpaceCadet can turn your shifts into parens on tap, while keeping them as
   // Shifts when held. SpaceCadetConfig lets Chrysalis configure some aspects of
@@ -333,6 +336,11 @@ const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
 
 void setup() {
   Kaleidoscope.setup();
+
+  // timeless homerow mods(urob)에 맞춘 값 — 근거는 keyboard/atreus/SETTINGS.md
+  Qukeys.setHoldTimeout(280);
+  Qukeys.setMinimumPriorInterval(150);
+  Qukeys.setMaxIntervalForTapRepeat(175);
   //  EEPROMKeymap.setup(10);
 
   DynamicMacros.reserve_storage(48);
