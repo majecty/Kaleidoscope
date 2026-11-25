@@ -31,7 +31,6 @@
 #include "Kaleidoscope-MouseKeys.h"
 #include "Kaleidoscope-OneShot.h"
 #include "Kaleidoscope-Qukeys.h"
-#include "Kaleidoscope-Chord.h"
 #include "Kaleidoscope-SpaceCadet.h"
 #include "Kaleidoscope-DynamicMacros.h"
 #include "Kaleidoscope-LayerNames.h"
@@ -90,7 +89,7 @@ KEYMAPS(
                      ,Key_Y     ,Key_U      ,Key_I     ,Key_O      ,Key_P
                      ,Key_H     ,Key_J      ,Key_K     ,Key_L      ,Key_Semicolon
        ,Key_F13      ,Key_N     ,Key_M      ,Key_Comma ,Key_Period ,Key_Slash
-       ,Key_Lang1    ,Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_F14
+       ,OSL(SYMBOL)   ,Key_Enter ,Key_Esc    ,Key_Minus ,Key_Quote  ,Key_F14
   ),
 
   [SYMBOL] = KEYMAP_STACKED
@@ -175,9 +174,6 @@ KEYMAPS(
 // clang-format on
 
 KALEIDOSCOPE_INIT_PLUGINS(
-  // L+; 조합을 먼저 잡아야 한다 — Qukeys가 먼저면 l/;가 LeftAlt/LeftControl로 바뀌어 Chord가 못 본다.
-  Chord,
-
   // Qukeys는 겹처 치기 판정을 먼저 하도록 목록 맨 앞에 둔다(플러그인 문서 권장).
   Qukeys,
 
@@ -348,9 +344,6 @@ void setup() {
   Qukeys.setHoldTimeout(280);
   Qukeys.setMinimumPriorInterval(150);
   Qukeys.setMaxIntervalForTapRepeat(175);
-
-  // l과 ; 를 동시에 누르면 '(Key_Quote)가 나온다
-  CHORDS(CHORD(Key_L, Key_Semicolon), Key_Quote);
   //  EEPROMKeymap.setup(10);
 
   DynamicMacros.reserve_storage(48);
